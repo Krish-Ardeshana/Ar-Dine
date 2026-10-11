@@ -103,4 +103,23 @@ describe('App & Auth Endpoints (e2e)', () => {
 
     expect(response.body.statusCode).toBe(401);
   });
+
+  it('POST /api/v1/restaurants/:id/tables should reject unauthenticated request with 401', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/restaurants/6640a1b2c3d4e5f6a7b8c9d0/tables')
+      .send({ tableNumber: 'Table 1', capacity: 4 })
+      .expect(401);
+
+    expect(response.body.statusCode).toBe(401);
+  });
+
+
+  it('POST /api/v1/restaurants/public/:slug/tables/:token/orders/validate should reject empty items payload with 400', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/restaurants/public/sample-bistro/tables/tbl_token/orders/validate')
+      .send({ sessionToken: 'ses_123', items: [] })
+      .expect(400);
+
+    expect(response.body.statusCode).toBe(400);
+  });
 });
