@@ -113,7 +113,7 @@ For detailed setup, see [docs/development-setup.md](file:///d:/AR_Dine/docs/deve
 - [x] **Phase 0:** Toolchain Setup & Repository Baseline
 - [x] **Phase 1:** Monorepo Scaffolding & Configuration (NestJS Backend + Next.js Frontend)
 - [x] **Phase 2:** Database Schemas & Multi-Tenant Core (MongoDB Atlas + Mongoose)
-- [ ] **Phase 3:** Authentication & Role-Based Access Control
+- [x] **Phase 3:** Authentication & Role-Based Access Control (JWT + RBAC + Multi-Tenant Guards)
 - [ ] **Phase 4:** Menu Management & 3D/AR Asset Integration
 - [ ] **Phase 5:** Table QR & Customer Ordering Flow
 - [ ] **Phase 6:** Order Lifecycle State Machine & Real-Time Sync

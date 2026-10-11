@@ -39,6 +39,14 @@ cd D:\AR_Dine\backend
 Copy-Item .env.example .env
 ```
 
+Key environment settings for Phase 3:
+- `JWT_ACCESS_SECRET`: Secret key for access token signing (min 32 chars in production).
+- `JWT_ACCESS_EXPIRES_IN`: Access token lifetime (default: `15m`).
+- `JWT_REFRESH_SECRET`: Secret key for refresh token signing.
+- `JWT_REFRESH_EXPIRES_IN`: Refresh token lifetime (default: `7d`).
+- `MONGODB_URI`: Atlas cluster connection string. Leave blank for unconfigured offline mode.
+- `CORS_ORIGIN`: Allowed frontend origins (e.g. `http://localhost:3000`).
+
 ### 2.2 Install Dependencies
 ```powershell
 npm install
