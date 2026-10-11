@@ -36,6 +36,9 @@ export class RestaurantTable {
     index: true,
   })
   operationalStatus: TableStatus;
+
+  @Prop({ type: Boolean, default: false, index: true })
+  isArchived: boolean;
 }
 
 export const RestaurantTableSchema = SchemaFactory.createForClass(RestaurantTable);

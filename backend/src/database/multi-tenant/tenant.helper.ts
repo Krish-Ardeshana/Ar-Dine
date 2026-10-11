@@ -54,4 +54,21 @@ export class TenantHelper {
       );
     }
   }
+
+  /**
+   * Safely checks whether two ObjectId representations refer to the exact same ID.
+   */
+  static areObjectIdsEqual(
+    a: string | Types.ObjectId | undefined | null,
+    b: string | Types.ObjectId | undefined | null,
+  ): boolean {
+    if (!a || !b) return false;
+    try {
+      const aId = this.toObjectId(a);
+      const bId = this.toObjectId(b);
+      return aId.equals(bId);
+    } catch {
+      return false;
+    }
+  }
 }

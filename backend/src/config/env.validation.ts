@@ -22,6 +22,10 @@ export class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
+  FRONTEND_BASE_URL: string = 'http://localhost:3000';
+
+  @IsString()
+  @IsOptional()
   MONGODB_URI?: string;
 
   /**

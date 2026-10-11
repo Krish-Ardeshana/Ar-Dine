@@ -8,6 +8,8 @@ import { HealthModule } from './health/health.module.js';
 import { MediaModule } from './media/media.module.js';
 import { MenuItemsModule } from './menu-items/menu-items.module.js';
 import { RestaurantsModule } from './restaurants/restaurants.module.js';
+import { TablesModule } from './tables/tables.module.js';
+import { DiningSessionsModule } from './dining-sessions/dining-sessions.module.js';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { RestaurantsModule } from './restaurants/restaurants.module.js';
     CategoriesModule,
     MenuItemsModule,
     MediaModule,
+    TablesModule,
+    DiningSessionsModule,
   ],
 })
 export class AppModule {}
