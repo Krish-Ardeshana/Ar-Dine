@@ -66,6 +66,14 @@ npm run lint
 npm run build
 ```
 
+### 2.5 Deterministic Database Seeding
+To populate development fixtures (2 restaurants, staff, categories, 3D dishes, and tables):
+```powershell
+# Ensure MONGODB_URI is set in backend/.env:
+npm run seed
+```
+*(Strictly blocked when `NODE_ENV=production`)*
+
 ---
 
 ## 3. Frontend Setup (`/frontend`)

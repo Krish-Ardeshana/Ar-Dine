@@ -100,7 +100,7 @@ AR-DINE/
    ```
    Web interface runs on `http://localhost:3000`.
 
-For detailed setup, see [docs/development-setup.md](file:///d:/AR_Dine/docs/development-setup.md) and [docs/architecture.md](file:///d:/AR_Dine/docs/architecture.md).
+For detailed setup, see [docs/development-setup.md](file:///d:/AR_Dine/docs/development-setup.md), [docs/architecture.md](file:///d:/AR_Dine/docs/architecture.md), and [docs/database-design.md](file:///d:/AR_Dine/docs/database-design.md).
 
 ### Security Note
 > ⚠️ **CRITICAL SECURITY REQUIREMENT:**  
@@ -112,7 +112,7 @@ For detailed setup, see [docs/development-setup.md](file:///d:/AR_Dine/docs/deve
 
 - [x] **Phase 0:** Toolchain Setup & Repository Baseline
 - [x] **Phase 1:** Monorepo Scaffolding & Configuration (NestJS Backend + Next.js Frontend)
-- [ ] **Phase 2:** Database Schemas & Multi-Tenant Isolation
+- [x] **Phase 2:** Database Schemas & Multi-Tenant Core (MongoDB Atlas + Mongoose)
 - [ ] **Phase 3:** Authentication & Role-Based Access Control
 - [ ] **Phase 4:** Menu Management & 3D/AR Asset Integration
 - [ ] **Phase 5:** Table QR & Customer Ordering Flow
