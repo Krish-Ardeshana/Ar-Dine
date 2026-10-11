@@ -82,6 +82,26 @@ AR-DINE/
 - **MongoDB:** MongoDB Atlas account or local MongoDB Community instance
 - **Modern Web Browser:** Chrome, Safari, or Edge on Android/iOS with ARCore/ARKit support for WebXR previews
 
+### Quick Start
+
+1. **Start Backend Server:**
+   ```powershell
+   cd backend
+   npm install
+   npm run start:dev
+   ```
+   API runs on `http://localhost:4000/api/v1` (Health: `http://localhost:4000/api/v1/health`).
+
+2. **Start Frontend Client:**
+   ```powershell
+   cd frontend
+   npm install
+   npm run dev
+   ```
+   Web interface runs on `http://localhost:3000`.
+
+For detailed setup, see [docs/development-setup.md](file:///d:/AR_Dine/docs/development-setup.md) and [docs/architecture.md](file:///d:/AR_Dine/docs/architecture.md).
+
 ### Security Note
 > ⚠️ **CRITICAL SECURITY REQUIREMENT:**  
 > Never commit `.env` files, JWT secrets, database connection strings, or cloud storage API credentials to version control. All sensitive keys must be configured via environment variables and documented solely in `.env.example` templates.
@@ -91,7 +111,7 @@ AR-DINE/
 ## 6. Implementation Status
 
 - [x] **Phase 0:** Toolchain Setup & Repository Baseline
-- [ ] **Phase 1:** Project Scaffolding (NestJS Backend & Next.js Frontend)
+- [x] **Phase 1:** Monorepo Scaffolding & Configuration (NestJS Backend + Next.js Frontend)
 - [ ] **Phase 2:** Database Schemas & Multi-Tenant Isolation
 - [ ] **Phase 3:** Authentication & Role-Based Access Control
 - [ ] **Phase 4:** Menu Management & 3D/AR Asset Integration
