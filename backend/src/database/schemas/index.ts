@@ -5,3 +5,5 @@ export * from './menu-item.schema.js';
 export * from './restaurant-table.schema.js';
 export * from './dining-session.schema.js';
 export * from './order.schema.js';
+export * from './restaurant-invitation.schema.js';
+

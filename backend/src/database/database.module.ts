@@ -16,6 +16,8 @@ import {
   RestaurantSchema,
   RestaurantTable,
   RestaurantTableSchema,
+  RestaurantInvitation,
+  RestaurantInvitationSchema,
   User,
   UserSchema,
 } from './schemas/index.js';
@@ -47,6 +49,7 @@ import {
       { name: RestaurantTable.name, schema: RestaurantTableSchema },
       { name: DiningSession.name, schema: DiningSessionSchema },
       { name: Order.name, schema: OrderSchema },
+      { name: RestaurantInvitation.name, schema: RestaurantInvitationSchema },
     ]),
   ],
   providers: [DatabaseService, TenantValidationService],
