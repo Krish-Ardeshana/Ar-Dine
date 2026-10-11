@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { HealthController } from './health.controller.js';
 import { HealthService } from './health.service.js';
+import { DatabaseService } from '../database/database.service.js';
 
 describe('HealthController', () => {
   let controller: HealthController;
@@ -20,6 +21,15 @@ describe('HealthController', () => {
             }),
           },
         },
+        {
+          provide: DatabaseService,
+          useValue: {
+            getHealthInfo: vi.fn().mockReturnValue({
+              status: 'unconfigured',
+              ready: false,
+            }),
+          },
+        },
       ],
     }).compile();
 
@@ -30,12 +40,16 @@ describe('HealthController', () => {
     expect(controller).toBeDefined();
   });
 
-  it('should return health status', () => {
+  it('should return health status with database info', () => {
     const result = controller.getHealth();
     expect(result.status).toBe('ok');
     expect(result.service).toBe('ar-dine-backend');
     expect(result.environment).toBe('test');
     expect(typeof result.timestamp).toBe('string');
     expect(typeof result.uptime).toBe('number');
+    expect(result.database).toEqual({
+      status: 'unconfigured',
+      ready: false,
+    });
   });
 });

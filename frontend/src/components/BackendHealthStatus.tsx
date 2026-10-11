@@ -111,13 +111,22 @@ export default function BackendHealthStatus() {
                 <span className="text-neutral-500">Service:</span> {health.service}
               </div>
               <div className="rounded bg-neutral-900/80 p-2">
-                <span className="text-neutral-500">Status:</span> {health.status}
+                <span className="text-neutral-500">API Status:</span> {health.status}
               </div>
               <div className="rounded bg-neutral-900/80 p-2">
                 <span className="text-neutral-500">Env:</span> {health.environment}
               </div>
               <div className="rounded bg-neutral-900/80 p-2">
-                <span className="text-neutral-500">Uptime:</span> {health.uptime}s
+                <span className="text-neutral-500">DB State:</span>{" "}
+                <span
+                  className={
+                    health.database?.ready
+                      ? "text-emerald-400 font-semibold"
+                      : "text-amber-400 font-semibold"
+                  }
+                >
+                  {health.database?.status ?? "unconfigured"}
+                </span>
               </div>
             </div>
           </div>

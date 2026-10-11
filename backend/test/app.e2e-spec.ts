@@ -21,7 +21,7 @@ describe('HealthController (e2e)', () => {
     await app.close();
   });
 
-  it('GET /api/v1/health should return 200 and healthy status', async () => {
+  it('GET /api/v1/health should return 200 and healthy status with database diagnostics', async () => {
     const response = await request(app.getHttpServer())
       .get('/api/v1/health')
       .expect(200);
@@ -30,6 +30,9 @@ describe('HealthController (e2e)', () => {
       status: 'ok',
       service: 'ar-dine-backend',
     });
+    expect(response.body.database).toBeDefined();
+    expect(typeof response.body.database.status).toBe('string');
+    expect(typeof response.body.database.ready).toBe('boolean');
     expect(typeof response.body.timestamp).toBe('string');
     expect(typeof response.body.uptime).toBe('number');
   });
