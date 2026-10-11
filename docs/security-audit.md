@@ -75,4 +75,32 @@ The following security properties are verified by automated tests in `vitest`:
 | Scoped restaurant membership enforcement | `roles.guard.spec.ts` | ✅ PASS |
 | Cross-tenant unauthorized access denial | `roles.guard.spec.ts` | ✅ PASS |
 | Password hash exclusion from responses | `auth.controller.spec.ts` | ✅ PASS |
+| Password hash exclusion from responses | `auth.controller.spec.ts` | ✅ PASS |
 | Admin staff assignment boundary | `membership.service.spec.ts` | ✅ PASS |
+| Single-use invitation token hashing & match | `restaurants.service.spec.ts` | ✅ PASS |
+| Category dish existence deletion defense | `categories.service.spec.ts` | ✅ PASS |
+| Cross-tenant category boundary check | `categories.service.spec.ts` | ✅ PASS |
+| Cross-tenant menu item boundary check | `menu-items.service.spec.ts` | ✅ PASS |
+| Historical order preservation on dish delete | `menu-items.service.spec.ts` | ✅ PASS |
+| Image magic bytes verification (JPEG/PNG/WebP)| `media.service.spec.ts` | ✅ PASS |
+| GLB binary header validation ('glTF') | `media.service.spec.ts` | ✅ PASS |
+| Cross-tenant media deletion denial | `media.service.spec.ts` | ✅ PASS |
+
+---
+
+## 4. Phase 4 Threat Modeling & File Upload Hardening
+
+### 4.1 Path Traversal in File Uploads
+- **Threat:** Attackers upload filenames like `../../etc/passwd` to overwrite arbitrary filesystem files.
+- **Defense Implemented:** `LocalStorageProvider` normalizes paths with `path.normalize`, strips relative tokens, and computes `path.resolve(this.baseStorageDir, key)`. If the target does not strictly start with `this.baseStorageDir`, the operation is aborted with `400 Bad Request`.
+
+### 4.2 Malicious Polyglot & MIME Forgery
+- **Threat:** Uploading PHP/HTML/JavaScript with a `.jpg` or `.glb` extension.
+- **Defense Implemented:**
+  - Mandatory binary magic number inspection in `MediaService`:
+    - JPEG files must start with `FF D8 FF`.
+    - PNG files must start with `89 50 4E 47`.
+    - WebP files must start with `RIFF` and contain `WEBP`.
+    - 3D models must start with ASCII `'glTF'`.
+  - Rejection of non-GLB 3D files.
+
