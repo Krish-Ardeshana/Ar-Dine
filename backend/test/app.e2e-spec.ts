@@ -68,4 +68,39 @@ describe('App & Auth Endpoints (e2e)', () => {
       .get('/api/v1/non-existent-route')
       .expect(404);
   });
+
+  it('POST /api/v1/restaurants should reject unauthenticated request with 401 Unauthorized', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/restaurants')
+      .send({ name: 'Unauthorized Bistro', slug: 'unauthorized-bistro' })
+      .expect(401);
+
+    expect(response.body.statusCode).toBe(401);
+  });
+
+  it('POST /api/v1/restaurants/:id/categories should reject unauthenticated request with 401', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/restaurants/6640a1b2c3d4e5f6a7b8c9d0/categories')
+      .send({ name: 'Drinks' })
+      .expect(401);
+
+    expect(response.body.statusCode).toBe(401);
+  });
+
+  it('POST /api/v1/restaurants/:id/menu-items should reject unauthenticated request with 401', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/restaurants/6640a1b2c3d4e5f6a7b8c9d0/menu-items')
+      .send({ name: 'Burger', price: 150 })
+      .expect(401);
+
+    expect(response.body.statusCode).toBe(401);
+  });
+
+  it('POST /api/v1/restaurants/:id/media/upload-image should reject unauthenticated request with 401', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/restaurants/6640a1b2c3d4e5f6a7b8c9d0/media/upload-image')
+      .expect(401);
+
+    expect(response.body.statusCode).toBe(401);
+  });
 });
