@@ -42,6 +42,9 @@ export class User {
   @Prop({ select: false })
   passwordHash?: string;
 
+  @Prop({ select: false })
+  refreshTokenHash?: string;
+
   @Prop({
     type: String,
     enum: Object.values(AccountStatus),

@@ -24,6 +24,45 @@ export class EnvironmentVariables {
   @IsOptional()
   MONGODB_URI?: string;
 
+  /**
+   * Primary JWT access secret for signing and verifying access tokens.
+   */
+  @IsString()
+  @IsOptional()
+  JWT_ACCESS_SECRET?: string;
+
+  /**
+   * Primary JWT access token lifetime (short-lived, e.g. '15m').
+   */
+  @IsString()
+  @IsOptional()
+  JWT_ACCESS_EXPIRES_IN: string = '15m';
+
+  /**
+   * JWT refresh secret for signing and verifying long-lived refresh tokens.
+   */
+  @IsString()
+  @IsOptional()
+  JWT_REFRESH_SECRET?: string;
+
+  /**
+   * JWT refresh token lifetime (e.g. '7d').
+   */
+  @IsString()
+  @IsOptional()
+  JWT_REFRESH_EXPIRES_IN: string = '7d';
+
+  @IsString()
+  @IsOptional()
+  JWT_ISSUER: string = 'ar-dine-api';
+
+  @IsString()
+  @IsOptional()
+  JWT_AUDIENCE: string = 'ar-dine-app';
+
+  /**
+   * Legacy alias for JWT_ACCESS_SECRET
+   */
   @IsString()
   @IsOptional()
   JWT_SECRET?: string;
@@ -40,6 +79,22 @@ export function validate(config: Record<string, unknown>) {
 
   if (errors.length > 0) {
     throw new Error(`Config validation error: ${errors.toString()}`);
+  }
+
+  // Production safety check: enforce strong non-default JWT secret
+  if (validatedConfig.NODE_ENV === Environment.Production) {
+    const accessSecret =
+      validatedConfig.JWT_ACCESS_SECRET || validatedConfig.JWT_SECRET;
+    if (!accessSecret || accessSecret.length < 32) {
+      throw new Error(
+        'Production security violation: JWT_ACCESS_SECRET must be configured with at least 32 cryptographically random characters in production',
+      );
+    }
+    if (!validatedConfig.JWT_REFRESH_SECRET || validatedConfig.JWT_REFRESH_SECRET.length < 32) {
+      throw new Error(
+        'Production security violation: JWT_REFRESH_SECRET must be configured with at least 32 cryptographically random characters in production',
+      );
+    }
   }
 
   return validatedConfig;
