@@ -1,5 +1,17 @@
 import { BackendHealthResponse } from '@/types/api';
 import { AuthResponse, AuthUser } from '@/types/auth';
+import {
+  CreateTablePayload,
+  PublicTableResolution,
+  RestaurantTableItem,
+  TableQrResponse,
+  UpdateTablePayload,
+} from '@/types/table';
+import {
+  DiningSessionResponse,
+  ValidateCartOrderPayload,
+  ValidateCartOrderResult,
+} from '@/types/session';
 import { authStorage } from './auth-storage';
 
 const API_BASE_URL =
@@ -395,5 +407,152 @@ export async function deleteMedia(
     headers: { 'x-restaurant-id': restaurantId },
     body: JSON.stringify({ storageKey }),
   });
+}
+
+// --- Table Management & QR ---
+
+export async function fetchTables(
+  restaurantId: string,
+  includeArchived = false,
+): Promise<RestaurantTableItem[]> {
+  const query = includeArchived ? '?includeArchived=true' : '';
+  return fetchWithAuth(`/restaurants/${restaurantId}/tables${query}`, {
+    method: 'GET',
+    headers: { 'x-restaurant-id': restaurantId },
+  });
+}
+
+export async function createTable(
+  restaurantId: string,
+  payload: CreateTablePayload,
+): Promise<RestaurantTableItem> {
+  return fetchWithAuth(`/restaurants/${restaurantId}/tables`, {
+    method: 'POST',
+    headers: { 'x-restaurant-id': restaurantId },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateTable(
+  restaurantId: string,
+  tableId: string,
+  payload: UpdateTablePayload,
+): Promise<RestaurantTableItem> {
+  return fetchWithAuth(`/restaurants/${restaurantId}/tables/${tableId}`, {
+    method: 'PATCH',
+    headers: { 'x-restaurant-id': restaurantId },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteTable(
+  restaurantId: string,
+  tableId: string,
+): Promise<{ message: string }> {
+  return fetchWithAuth(`/restaurants/${restaurantId}/tables/${tableId}`, {
+    method: 'DELETE',
+    headers: { 'x-restaurant-id': restaurantId },
+  });
+}
+
+export async function fetchTableQr(
+  restaurantId: string,
+  tableId: string,
+): Promise<TableQrResponse> {
+  return fetchWithAuth(`/restaurants/${restaurantId}/tables/${tableId}/qr`, {
+    method: 'GET',
+    headers: { 'x-restaurant-id': restaurantId },
+  });
+}
+
+export async function fetchBatchTableQrs(
+  restaurantId: string,
+): Promise<TableQrResponse[]> {
+  return fetchWithAuth(`/restaurants/${restaurantId}/tables/qr/batch`, {
+    method: 'GET',
+    headers: { 'x-restaurant-id': restaurantId },
+  });
+}
+
+// --- Public QR Resolution & Dining Sessions ---
+
+export async function resolvePublicTable(
+  slug: string,
+  tableToken: string,
+): Promise<PublicTableResolution> {
+  const url = `${getApiBaseUrl()}/restaurants/public/${encodeURIComponent(slug)}/tables/${encodeURIComponent(tableToken)}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+    cache: 'no-store',
+  });
+  return handleResponse<PublicTableResolution>(response);
+}
+
+export async function fetchPublicDishes(
+  restaurantId: string,
+  categoryId?: string,
+): Promise<import('@/types/menu').MenuItem[]> {
+  const query = categoryId ? `?categoryId=${encodeURIComponent(categoryId)}&limit=100` : '?limit=100';
+  const url = `${getApiBaseUrl()}/restaurants/${encodeURIComponent(restaurantId)}/menu-items${query}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+    cache: 'no-store',
+  });
+  const data = await handleResponse<import('@/types/menu').PaginatedMenuItems>(response);
+  return data.items;
+}
+
+export async function fetchPublicCategories(
+  restaurantId: string,
+): Promise<import('@/types/menu').Category[]> {
+  const url = `${getApiBaseUrl()}/restaurants/${encodeURIComponent(restaurantId)}/categories`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+    cache: 'no-store',
+  });
+  return handleResponse<import('@/types/menu').Category[]>(response);
+}
+
+export async function getOrCreatePublicSession(
+  slug: string,
+  tableToken: string,
+): Promise<DiningSessionResponse> {
+  const url = `${getApiBaseUrl()}/restaurants/public/${encodeURIComponent(slug)}/tables/${encodeURIComponent(tableToken)}/sessions`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    cache: 'no-store',
+  });
+  return handleResponse<DiningSessionResponse>(response);
+}
+
+export async function validateSession(
+  sessionToken: string,
+): Promise<DiningSessionResponse> {
+  const url = `${getApiBaseUrl()}/dining-sessions/${encodeURIComponent(sessionToken)}/validate`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+    cache: 'no-store',
+  });
+  return handleResponse<DiningSessionResponse>(response);
+}
+
+export async function validateCartOrder(
+  slug: string,
+  tableToken: string,
+  payload: ValidateCartOrderPayload,
+): Promise<ValidateCartOrderResult> {
+  const url = `${getApiBaseUrl()}/restaurants/public/${encodeURIComponent(slug)}/tables/${encodeURIComponent(tableToken)}/orders/validate`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(payload),
+    cache: 'no-store',
+  });
+  return handleResponse<ValidateCartOrderResult>(response);
 }
 

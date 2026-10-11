@@ -93,6 +93,7 @@ export default function DashboardLayout({
     { href: '/dashboard/categories', label: 'Categories', icon: '📁' },
     { href: '/dashboard/menu', label: 'Dish Catalog', icon: '🍽️' },
     { href: '/dashboard/menu/new', label: 'Add New Dish', icon: '✨' },
+    { href: '/dashboard/tables', label: 'Tables & QR Codes', icon: '🪑' },
   ];
 
   return (
@@ -154,9 +155,9 @@ export default function DashboardLayout({
         <div className="pt-6 border-t border-zinc-800/80 text-xs text-zinc-500">
           <div className="flex items-center space-x-2 mb-1">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span className="font-mono text-zinc-400">Phase 4 Active</span>
+            <span className="font-mono text-zinc-400">Phase 5 Active</span>
           </div>
-          <p className="text-[11px] text-zinc-600">AR-DINE Menu & 3D Engine</p>
+          <p className="text-[11px] text-zinc-600">Table QR & Dining Session Engine</p>
         </div>
       </aside>
 

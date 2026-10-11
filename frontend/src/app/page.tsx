@@ -41,8 +41,8 @@ export default function Home() {
     {
       num: '5',
       title: 'Table QR & Customer Ordering Flow',
-      status: 'PLANNED',
-      details: 'Immutable table QR tokens, responsive digital menu, and cart state.',
+      status: 'COMPLETED',
+      details: 'Immutable table QR tokens, dining session lifecycle, customer digital menu, 3D preview, and authoritative cart validation.',
     },
   ];
 
@@ -56,7 +56,7 @@ export default function Home() {
           </span>
           <span className="inline-flex items-center gap-1.5 font-medium text-emerald-400">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            Phase 4 Verified • Menu Management & 3D AR Pipeline
+            Phase 5 Verified • Table QR, Dining Sessions & Ordering Flow
           </span>
         </div>
       </div>
