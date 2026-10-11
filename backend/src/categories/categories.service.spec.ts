@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  NotFoundException,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
