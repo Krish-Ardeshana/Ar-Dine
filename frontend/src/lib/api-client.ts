@@ -148,3 +148,252 @@ export async function logoutUser(): Promise<void> {
   }
   authStorage.clearTokens();
 }
+
+/**
+ * Generic authenticated fetch wrapper with automatic token injection
+ */
+export async function fetchWithAuth<T>(
+  endpoint: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const token = authStorage.getAccessToken();
+  const headers = new Headers(options.headers || {});
+
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  const url = `${getApiBaseUrl()}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
+
+  return handleResponse<T>(response);
+}
+
+// ==========================================
+// RESTAURANT APIS
+// ==========================================
+
+export async function fetchMyRestaurants(): Promise<import('@/types/restaurant').Restaurant[]> {
+  return fetchWithAuth('/restaurants/me');
+}
+
+export async function fetchRestaurantById(
+  restaurantId: string,
+): Promise<import('@/types/restaurant').Restaurant> {
+  const token = authStorage.getAccessToken();
+  const headers: HeadersInit = { Accept: 'application/json' };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  const response = await fetch(`${getApiBaseUrl()}/restaurants/${restaurantId}`, {
+    headers,
+    cache: 'no-store',
+  });
+  return handleResponse<import('@/types/restaurant').Restaurant>(response);
+}
+
+export async function updateRestaurant(
+  restaurantId: string,
+  data: Partial<import('@/types/restaurant').Restaurant>,
+): Promise<import('@/types/restaurant').Restaurant> {
+  return fetchWithAuth(`/restaurants/${restaurantId}`, {
+    method: 'PATCH',
+    headers: { 'x-restaurant-id': restaurantId },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function acceptInvitation(
+  token: string,
+): Promise<{ message: string; restaurantId: string; role: string }> {
+  return fetchWithAuth('/restaurants/invitations/accept', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
+  });
+}
+
+// ==========================================
+// CATEGORY APIS
+// ==========================================
+
+export async function fetchCategories(
+  restaurantId: string,
+  includeInactive = false,
+): Promise<import('@/types/menu').Category[]> {
+  const query = includeInactive ? '?includeInactive=true' : '';
+  return fetchWithAuth(`/restaurants/${restaurantId}/categories${query}`, {
+    headers: { 'x-restaurant-id': restaurantId },
+  });
+}
+
+export async function createCategory(
+  restaurantId: string,
+  data: { name: string; description?: string; displayOrder?: number },
+): Promise<import('@/types/menu').Category> {
+  return fetchWithAuth(`/restaurants/${restaurantId}/categories`, {
+    method: 'POST',
+    headers: { 'x-restaurant-id': restaurantId },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateCategory(
+  restaurantId: string,
+  categoryId: string,
+  data: Partial<import('@/types/menu').Category>,
+): Promise<import('@/types/menu').Category> {
+  return fetchWithAuth(`/restaurants/${restaurantId}/categories/${categoryId}`, {
+    method: 'PATCH',
+    headers: { 'x-restaurant-id': restaurantId },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteCategory(
+  restaurantId: string,
+  categoryId: string,
+): Promise<{ message: string; deletedId: string }> {
+  return fetchWithAuth(`/restaurants/${restaurantId}/categories/${categoryId}`, {
+    method: 'DELETE',
+    headers: { 'x-restaurant-id': restaurantId },
+  });
+}
+
+export async function reorderCategories(
+  restaurantId: string,
+  orders: { id: string; displayOrder: number }[],
+): Promise<import('@/types/menu').Category[]> {
+  return fetchWithAuth(`/restaurants/${restaurantId}/categories/reorder`, {
+    method: 'PATCH',
+    headers: { 'x-restaurant-id': restaurantId },
+    body: JSON.stringify({ orders }),
+  });
+}
+
+// ==========================================
+// MENU ITEM APIS
+// ==========================================
+
+export async function fetchMenuItems(
+  restaurantId: string,
+  params: Record<string, string | number | boolean | undefined> = {},
+): Promise<import('@/types/menu').PaginatedMenuItems> {
+  const queryParams = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined) queryParams.set(k, String(v));
+  });
+  const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
+
+  return fetchWithAuth(`/restaurants/${restaurantId}/menu-items${queryString}`, {
+    headers: { 'x-restaurant-id': restaurantId },
+  });
+}
+
+export async function fetchMenuItemById(
+  restaurantId: string,
+  menuItemId: string,
+): Promise<import('@/types/menu').MenuItem> {
+  return fetchWithAuth(`/restaurants/${restaurantId}/menu-items/${menuItemId}`, {
+    headers: { 'x-restaurant-id': restaurantId },
+  });
+}
+
+export async function createMenuItem(
+  restaurantId: string,
+  data: Partial<import('@/types/menu').MenuItem>,
+): Promise<import('@/types/menu').MenuItem> {
+  return fetchWithAuth(`/restaurants/${restaurantId}/menu-items`, {
+    method: 'POST',
+    headers: { 'x-restaurant-id': restaurantId },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateMenuItem(
+  restaurantId: string,
+  menuItemId: string,
+  data: Partial<import('@/types/menu').MenuItem>,
+): Promise<import('@/types/menu').MenuItem> {
+  return fetchWithAuth(`/restaurants/${restaurantId}/menu-items/${menuItemId}`, {
+    method: 'PATCH',
+    headers: { 'x-restaurant-id': restaurantId },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateItemAvailability(
+  restaurantId: string,
+  menuItemId: string,
+  availabilityStatus: import('@/types/menu').AvailabilityStatus,
+): Promise<import('@/types/menu').MenuItem> {
+  return fetchWithAuth(`/restaurants/${restaurantId}/menu-items/${menuItemId}/availability`, {
+    method: 'PATCH',
+    headers: { 'x-restaurant-id': restaurantId },
+    body: JSON.stringify({ availabilityStatus }),
+  });
+}
+
+export async function deleteMenuItem(
+  restaurantId: string,
+  menuItemId: string,
+): Promise<{ message: string; deletedId: string; status: 'DELETED' | 'ARCHIVED' }> {
+  return fetchWithAuth(`/restaurants/${restaurantId}/menu-items/${menuItemId}`, {
+    method: 'DELETE',
+    headers: { 'x-restaurant-id': restaurantId },
+  });
+}
+
+// ==========================================
+// MEDIA UPLOAD APIS
+// ==========================================
+
+export async function uploadDishImage(
+  restaurantId: string,
+  file: File,
+  altText?: string,
+): Promise<import('@/types/menu').ImageMetadata> {
+  const formData = new FormData();
+  formData.append('file', file);
+  if (altText) {
+    formData.append('altText', altText);
+  }
+
+  return fetchWithAuth(`/restaurants/${restaurantId}/media/upload-image`, {
+    method: 'POST',
+    headers: { 'x-restaurant-id': restaurantId },
+    body: formData,
+  });
+}
+
+export async function uploadDishModel(
+  restaurantId: string,
+  file: File,
+): Promise<import('@/types/menu').Model3DMetadata> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return fetchWithAuth(`/restaurants/${restaurantId}/media/upload-model`, {
+    method: 'POST',
+    headers: { 'x-restaurant-id': restaurantId },
+    body: formData,
+  });
+}
+
+export async function deleteMedia(
+  restaurantId: string,
+  storageKey: string,
+): Promise<{ message: string }> {
+  return fetchWithAuth(`/restaurants/${restaurantId}/media`, {
+    method: 'DELETE',
+    headers: { 'x-restaurant-id': restaurantId },
+    body: JSON.stringify({ storageKey }),
+  });
+}
+

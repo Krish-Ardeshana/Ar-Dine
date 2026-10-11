@@ -41,6 +41,13 @@ export default function Navbar() {
 
               <span className="h-6 w-[1px] bg-neutral-800 hidden sm:block" />
 
+              <Link
+                href="/dashboard"
+                className="rounded-lg bg-emerald-600/20 border border-emerald-500/30 px-3 py-1.5 text-xs font-semibold text-emerald-400 hover:bg-emerald-600 hover:text-white transition"
+              >
+                Dashboard
+              </Link>
+
               <button
                 onClick={() => logout()}
                 className="rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-xs font-medium text-neutral-300 transition-colors hover:border-red-900/60 hover:bg-red-950/30 hover:text-red-400"

@@ -29,14 +29,14 @@ export default function Home() {
     {
       num: '3',
       title: 'Authentication & Role-Based Access Control',
-      status: 'ACTIVE',
+      status: 'COMPLETED',
       details: 'JWT access & refresh tokens, password hashing, and tenant-scoped authorization guards.',
     },
     {
       num: '4',
       title: 'Menu Management & 3D/AR Asset Pipeline',
-      status: 'PLANNED',
-      details: 'GLB/GLTF model management with Google <model-viewer> and WebXR fallbacks.',
+      status: 'COMPLETED',
+      details: 'Restaurant onboarding, category CRUD, dish management, and Google <model-viewer> 3D food preview.',
     },
     {
       num: '5',
@@ -54,9 +54,9 @@ export default function Home() {
           <span className="text-neutral-400">
             College Project-I • Course CEUP301
           </span>
-          <span className="inline-flex items-center gap-1.5 font-medium text-amber-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-            Phase 3 Active • Authentication & RBAC
+          <span className="inline-flex items-center gap-1.5 font-medium text-emerald-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            Phase 4 Verified • Menu Management & 3D AR Pipeline
           </span>
         </div>
       </div>
@@ -102,7 +102,16 @@ export default function Home() {
                 A multi-tenant smart dining platform integrating Next.js, NestJS, MongoDB Atlas, and WebXR-based 3D dish visualization. Phase 3 provides role-based access control, tenant boundary guards, and customer identity.
               </p>
 
-              {!isAuthenticated && (
+              {isAuthenticated ? (
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Link
+                    href="/dashboard"
+                    className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/30 hover:bg-emerald-500 transition-colors flex items-center space-x-2"
+                  >
+                    <span>🏪 Go to Staff Dashboard</span>
+                  </Link>
+                </div>
+              ) : (
                 <div className="mt-6 flex flex-wrap gap-3">
                   <Link
                     href="/register"
