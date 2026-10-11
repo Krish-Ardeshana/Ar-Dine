@@ -48,6 +48,7 @@ Key environment settings for Phase 3 & 4:
 - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`: (Optional) Cloudinary credentials for cloud asset uploads.
 - `MONGODB_URI`: Atlas cluster connection string. Leave blank for unconfigured offline mode.
 - `CORS_ORIGIN`: Allowed frontend origins (e.g. `http://localhost:3000`).
+- `FRONTEND_BASE_URL`: Public frontend URL embedded in physical table QR codes (default: `http://localhost:3000`).
 
 ### 2.2 Install Dependencies
 ```powershell

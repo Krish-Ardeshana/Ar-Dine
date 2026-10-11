@@ -104,3 +104,23 @@ The following security properties are verified by automated tests in `vitest`:
     - 3D models must start with ASCII `'glTF'`.
   - Rejection of non-GLB 3D files.
 
+---
+
+## 5. Phase 5 QR Code, Session Lifecycle & Cart Security
+
+### 5.1 Physical Table QR Invariance & Tamper Resistance
+- **Threat:** Menu mutations (dish renaming, price updates, category changes) cause printed table QRs to break or require expensive re-printing.
+- **Defense Implemented:** Physical table QR codes encode an immutable table token (`tbl_<16-byte-hex>`) rather than mutable menu items or sequential database IDs. Modifying items has zero impact on QR URLs (`tables.service.spec.ts` & `qr.service.spec.ts`).
+
+### 5.2 Client-Side Cart Price Tampering
+- **Threat:** Adversaries manipulate client-side JavaScript or HTTP payloads to set dish prices to $0.01 or negative values.
+- **Defense Implemented:** Server-side authoritative validation in `DiningSessionsService.validateCartOrder`. The server ignores client-supplied prices entirely and queries the authoritative database record for each dish (`dining-sessions.service.spec.ts`).
+
+### 5.3 Cross-Tenant Dish Injection
+- **Threat:** In a multi-tenant environment, an attacker seated at Restaurant A orders a dish from Restaurant B in their cart.
+- **Defense Implemented:** `DiningSessionsService.validateCartOrder` cross-checks `TenantHelper.areObjectIdsEqual(menuItem.restaurantId, restaurant._id)` for every cart item. Foreign items are rejected with `400 Bad Request`.
+
+### 5.4 Dining Session Hijacking & Expiry Enforcement
+- **Threat:** Attacker uses an expired or foreign dining session token.
+- **Defense Implemented:** Independent application-level expiration logic (`session.expiresAt <= new Date()`). Stale sessions are automatically transitioned to `EXPIRED` status, preventing unauthorized order submission.
+

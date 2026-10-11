@@ -1,7 +1,7 @@
 # AR-DINE — Complete API Reference (`/api/v1`)
 
 > **Specification:** REST API Architecture  
-> **Status:** Phase 1 through Phase 4 Endpoints Verified
+> **Status:** Phase 1 through Phase 5 Endpoints Verified
 
 ---
 
@@ -43,3 +43,20 @@
 - `POST /upload-image`: `RESTAURANT_ADMIN`. Validates JPEG/PNG/WebP <= 5MB with magic bytes.
 - `POST /upload-model`: `RESTAURANT_ADMIN`. Validates self-contained binary GLB <= 25MB with `glTF` magic header.
 - `DELETE /`: `RESTAURANT_ADMIN`. Deletes asset belonging to `restaurants/${restaurantId}/`.
+
+## 7. Table & QR Management (`/api/v1/restaurants/:restaurantId/tables`)
+- `POST /`: `RESTAURANT_ADMIN`. Creates physical table with immutable `tableToken`.
+- `GET /`: Staff/Admin. Lists tables for active restaurant.
+- `GET /:tableId`: Staff/Admin. Returns single table.
+- `PATCH /:tableId`: `RESTAURANT_ADMIN`. Updates table number, capacity, and operational status.
+- `DELETE /:tableId`: `RESTAURANT_ADMIN`. Archives table safely to preserve historical order links.
+- `GET /:tableId/qr`: Staff/Admin. Generates stable target URL, base64 PNG data URL, and printable SVG.
+- `GET /qr/batch`: Staff/Admin. Batch generates QR codes (up to 50 tables per request).
+
+## 8. Public QR Resolution & Dining Sessions
+- `GET /api/v1/restaurants/public/:slug/tables/:tableToken`: Public. Resolves restaurant and table from physical QR code, checking publication and table active status.
+- `POST /api/v1/restaurants/public/:slug/tables/:tableToken/sessions`: Public. Starts or joins the table's current `ACTIVE` dining session (default 2-hour duration).
+- `GET /api/v1/dining-sessions/:sessionToken/validate`: Public. Validates session token and checks application-level expiry.
+- `POST /api/v1/restaurants/public/:slug/tables/:tableToken/orders/validate`: Public. Revalidates customer cart against server prices and live inventory, computing authoritative subtotal and taxes.
+- `GET /api/v1/restaurants/:restaurantId/dining-sessions`: Staff/Admin. Lists active sessions for restaurant.
+- `POST /api/v1/restaurants/:restaurantId/dining-sessions/:sessionId/close`: Staff/Admin. Closes dining session and resets table status to `AVAILABLE`.
