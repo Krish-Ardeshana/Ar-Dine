@@ -2,8 +2,10 @@
 
 import React, { Suspense, use, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ModelViewer } from '@/components/ModelViewer';
 import {
+  createOrder,
   fetchPublicCategories,
   fetchPublicDishes,
   getOrCreatePublicSession,
@@ -48,7 +50,9 @@ function CustomerTableMenuContent({ params }: PageProps) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [validationResult, setValidationResult] = useState<ValidateCartOrderResult | null>(null);
+  const router = useRouter();
   const [isValidating, setIsValidating] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   // Load initial data
@@ -183,6 +187,47 @@ function CustomerTableMenuContent({ params }: PageProps) {
       setValidationError(err instanceof Error ? err.message : 'Cart validation failed');
     } finally {
       setIsValidating(false);
+    }
+  };
+
+  const handleSubmitOrder = async () => {
+    if (!session || cart.length === 0 || isSubmitting) return;
+    setIsSubmitting(true);
+    setValidationError(null);
+    try {
+      const idempotencyKey = `idemp_${session.sessionToken}_${Date.now()}`;
+      const payload = {
+        sessionToken: session.sessionToken,
+        items: cart.map((i) => ({
+          menuItemId: i.dishId,
+          quantity: i.quantity,
+          specialInstructions: i.specialInstructions,
+        })),
+        idempotencyKey,
+      };
+
+      const order = await createOrder(restaurantSlug, tableToken, payload);
+
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(cartStorageKey);
+        if (order.trackingToken) {
+          sessionStorage.setItem(`ar_dine_trk_${order.orderNumber}`, order.trackingToken);
+        }
+      }
+      setCart([]);
+      setIsCartOpen(false);
+
+      router.push(
+        `/r/${encodeURIComponent(restaurantSlug)}/order/${encodeURIComponent(
+          order.orderNumber,
+        )}?token=${encodeURIComponent(order.trackingToken || '')}`,
+      );
+    } catch (err: unknown) {
+      setValidationError(
+        err instanceof Error ? err.message : 'Order placement failed',
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -683,7 +728,7 @@ function CustomerTableMenuContent({ params }: PageProps) {
 
                     <div className="mt-3 p-2.5 rounded-xl bg-zinc-900 border border-zinc-700/80 text-[11px] text-zinc-300 leading-relaxed">
                       <span className="font-bold text-emerald-400 block mb-0.5">
-                        Phase 5 Milestone Verified:
+                        Cart Authenticated:
                       </span>
                       {validationResult.message}
                     </div>
@@ -698,27 +743,55 @@ function CustomerTableMenuContent({ params }: PageProps) {
                 )}
 
                 <div className="space-y-2">
+                  {/* Primary: Phase 6 Real Order Placement */}
+                  <button
+                    onClick={handleSubmitOrder}
+                    disabled={isSubmitting || isValidating}
+                    className="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-black font-extrabold text-xs uppercase tracking-wider transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-amber-950/40"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                        <span>Sending Order to Kitchen...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🚀</span>
+                        <span>
+                          Submit Order to Kitchen (
+                          {restaurant.currency}{' '}
+                          {(validationResult
+                            ? validationResult.grandTotal
+                            : provisionalSubtotal * 1.05
+                          ).toFixed(2)}
+                          )
+                        </span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* Secondary: Cart Revalidation */}
                   <button
                     onClick={handleValidateOrder}
-                    disabled={isValidating}
-                    className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40"
+                    disabled={isValidating || isSubmitting}
+                    className="w-full py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold text-xs uppercase tracking-wider transition disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {isValidating ? (
                       <>
-                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Verifying with Server...</span>
+                        <span className="w-3.5 h-3.5 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" />
+                        <span>Verifying Availability...</span>
                       </>
                     ) : (
                       <>
                         <span>🛡️</span>
-                        <span>{validationResult ? 'Re-Validate Order' : 'Validate & Review Order'}</span>
+                        <span>{validationResult ? 'Re-Validate Cart' : 'Check Prices & Stock'}</span>
                       </>
                     )}
                   </button>
 
                   <button
                     onClick={() => setIsCartOpen(false)}
-                    className="w-full py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium text-xs transition"
+                    className="w-full py-2 rounded-xl bg-transparent hover:bg-zinc-900 text-zinc-400 hover:text-zinc-200 font-medium text-xs transition"
                   >
                     Continue Browsing Menu
                   </button>
