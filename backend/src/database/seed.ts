@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 import {
   CategorySchema,
   MenuItemSchema,
@@ -50,6 +51,9 @@ async function runSeed() {
     const MenuItemModel = mongoose.model('MenuItem', MenuItemSchema);
     const TableModel = mongoose.model('RestaurantTable', RestaurantTableSchema);
 
+    // Standard development seed password (bcrypt cost 12)
+    const defaultPasswordHash = await bcrypt.hash('Admin@123456', 12);
+
     console.log('1. Seeding System Super Admin...');
     const superAdmin = await UserModel.findOneAndUpdate(
       { email: 'superadmin@ardine.internal' },
@@ -57,6 +61,7 @@ async function runSeed() {
         $set: {
           name: 'Platform Super Admin',
           email: 'superadmin@ardine.internal',
+          passwordHash: defaultPasswordHash,
           accountStatus: 'ACTIVE',
           globalRoles: [UserRole.SUPER_ADMIN],
           memberships: [],
@@ -132,8 +137,30 @@ async function runSeed() {
         $set: {
           name: 'Rajesh Sharma (Spice Manager)',
           email: 'manager.spicecraft@ardine.internal',
+          passwordHash: defaultPasswordHash,
           accountStatus: 'ACTIVE',
           globalRoles: [UserRole.CUSTOMER],
+          memberships: [
+            {
+              restaurantId: spiceCraft._id,
+              roles: [UserRole.RESTAURANT_ADMIN],
+            },
+          ],
+        },
+      },
+      { upsert: true, new: true },
+    );
+
+    console.log('4b. Seeding User admin@dailyneeds.com...');
+    await UserModel.findOneAndUpdate(
+      { email: 'admin@dailyneeds.com' },
+      {
+        $set: {
+          name: 'Admin Dailyneeds',
+          email: 'admin@dailyneeds.com',
+          passwordHash: defaultPasswordHash,
+          accountStatus: 'ACTIVE',
+          globalRoles: [UserRole.SUPER_ADMIN],
           memberships: [
             {
               restaurantId: spiceCraft._id,
