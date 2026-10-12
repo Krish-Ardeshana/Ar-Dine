@@ -297,6 +297,7 @@ describe('OrdersService', () => {
         _id: orderId,
         restaurantId: validRestaurantId,
         status: OrderStatus.PLACED,
+        trackingToken: 'trk_mock_token',
         tableId: mockTableDoc,
         items: [],
       };
@@ -327,6 +328,7 @@ describe('OrdersService', () => {
       expect(mockOrderEventsService.emitOrderEvent).toHaveBeenCalledWith(
         'ORDER_UPDATED',
         expect.anything(),
+        'trk_mock_token',
       );
     });
 
@@ -551,6 +553,145 @@ describe('OrdersService', () => {
           { reason: 'Too late' },
         ),
       ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('Kitchen Queue & Staff Operations', () => {
+    it('returns active kitchen queue in FIFO order', async () => {
+      const mockOrders = [
+        {
+          _id: new Types.ObjectId(),
+          restaurantId: validRestaurantId,
+          orderNumber: 'ORD-20261012-001',
+          status: OrderStatus.PLACED,
+          tableId: mockTableDoc,
+          placedAt: new Date(Date.now() - 600000),
+          items: [],
+        },
+        {
+          _id: new Types.ObjectId(),
+          restaurantId: validRestaurantId,
+          orderNumber: 'ORD-20261012-002',
+          status: OrderStatus.PREPARING,
+          tableId: mockTableDoc,
+          placedAt: new Date(Date.now() - 300000),
+          items: [],
+        },
+      ];
+
+      const populateMock = vi.fn().mockReturnValue({
+        sort: vi.fn().mockResolvedValue(mockOrders),
+      });
+
+      mockOrderModel.find.mockReturnValue({
+        populate: populateMock,
+      });
+
+      const queue = await service.getKitchenQueue(validRestaurantId.toString());
+      expect(queue).toHaveLength(2);
+      expect(queue[0].orderNumber).toBe('ORD-20261012-001');
+      expect(queue[1].orderNumber).toBe('ORD-20261012-002');
+    });
+
+    it('enforces safe upper bound (max 100) on getRestaurantOrders limit', async () => {
+      const limitMock = vi.fn().mockResolvedValue([]);
+      const sortMock = vi.fn().mockReturnValue({ limit: limitMock });
+      const populateMock = vi.fn().mockReturnValue({ sort: sortMock });
+      mockOrderModel.find.mockReturnValue({ populate: populateMock });
+
+      await service.getRestaurantOrders(validRestaurantId.toString(), undefined, 500);
+      expect(limitMock).toHaveBeenCalledWith(100); // Bounded to 100!
+    });
+
+    it('allows staff to cancel order with custom reason and records staff email', async () => {
+      const orderId = new Types.ObjectId();
+      const mockOrder = {
+        _id: orderId,
+        restaurantId: validRestaurantId,
+        orderNumber: 'ORD-20261012-CANCEL',
+        status: OrderStatus.PREPARING,
+        tableId: mockTableDoc,
+        trackingToken: 'trk_staff_cancel',
+      };
+
+      mockOrderModel.findOne.mockResolvedValue(mockOrder);
+
+      const cancelledOrder = {
+        ...mockOrder,
+        status: OrderStatus.CANCELLED,
+        cancelledAt: new Date(),
+        cancellationReason: 'Chef 86 item',
+        cancelledBy: 'chef@restaurant.com',
+      };
+
+      mockOrderModel.findOneAndUpdate.mockReturnValue({
+        populate: vi.fn().mockResolvedValue(cancelledOrder),
+      });
+
+      const result = await service.cancelStaffOrder(
+        validRestaurantId.toString(),
+        orderId.toString(),
+        { reason: 'Chef 86 item' },
+        'chef@restaurant.com',
+      );
+
+      expect(result.status).toBe(OrderStatus.CANCELLED);
+      expect(result.cancelledBy).toBe('chef@restaurant.com');
+      expect(mockOrderEventsService.emitOrderEvent).toHaveBeenCalledWith(
+        'ORDER_CANCELLED',
+        expect.anything(),
+        'trk_staff_cancel',
+      );
+    });
+
+    it('rejects staff cancellation on orders that are already READY or SERVED', async () => {
+      const orderId = new Types.ObjectId();
+      const mockOrder = {
+        _id: orderId,
+        restaurantId: validRestaurantId,
+        status: OrderStatus.READY,
+      };
+
+      mockOrderModel.findOne.mockResolvedValue(mockOrder);
+
+      await expect(
+        service.cancelStaffOrder(
+          validRestaurantId.toString(),
+          orderId.toString(),
+          { reason: 'Too late' },
+          'staff@restaurant.com',
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws ConflictException (409) when concurrent status transition is detected', async () => {
+      const orderId = new Types.ObjectId();
+      const mockOrder = {
+        _id: orderId,
+        restaurantId: validRestaurantId,
+        status: OrderStatus.PLACED,
+        tableId: mockTableDoc,
+        items: [],
+      };
+
+      mockOrderModel.findOne.mockReturnValue({
+        populate: vi.fn().mockResolvedValue(mockOrder),
+      });
+
+      // findOneAndUpdate returns null because status changed concurrently
+      mockOrderModel.findOneAndUpdate.mockReturnValue({
+        populate: vi.fn().mockResolvedValue(null),
+      });
+
+      await expect(
+        service.updateOrderStatus(
+          validRestaurantId.toString(),
+          orderId.toString(),
+          OrderStatus.CONFIRMED,
+          [UserRole.RESTAURANT_ADMIN],
+          'admin@restaurant.com',
+        ),
+      ).rejects.toThrow(ConflictException);
     });
   });
 });

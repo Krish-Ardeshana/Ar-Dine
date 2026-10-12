@@ -156,4 +156,63 @@ describe('App & Auth Endpoints (e2e)', () => {
 
     expect(response.body.statusCode).toBe(401);
   });
+
+  it('POST /api/v1/restaurants/:id/orders/:orderId/cancel should reject unauthenticated request with 401', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/restaurants/6640a1b2c3d4e5f6a7b8c9d0/orders/6640a1b2c3d4e5f6a7b8c9d1/cancel')
+      .send({ reason: 'Kitchen 86' })
+      .expect(401);
+
+    expect(response.body.statusCode).toBe(401);
+  });
+
+  it('GET /api/v1/restaurants/:id/dining-sessions should reject unauthenticated request with 401', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/restaurants/6640a1b2c3d4e5f6a7b8c9d0/dining-sessions')
+      .expect(401);
+
+    expect(response.body.statusCode).toBe(401);
+  });
+
+  it('POST /api/v1/restaurants/:id/dining-sessions/:sessionId/close should reject unauthenticated request with 401', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/restaurants/6640a1b2c3d4e5f6a7b8c9d0/dining-sessions/6640a1b2c3d4e5f6a7b8c9d1/close')
+      .expect(401);
+
+    expect(response.body.statusCode).toBe(401);
+  });
+
+  it('POST /api/v1/restaurants/public/:slug/tables/:token/orders should reject excessive quantity (>50) with 400 Bad Request', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/restaurants/public/sample-bistro/tables/tbl_token/orders')
+      .send({
+        sessionToken: 'ses_123',
+        items: [{ menuItemId: 'dish_1', quantity: 99 }],
+      })
+      .expect(400);
+
+    expect(response.body.statusCode).toBe(400);
+  });
+
+  it('POST /api/v1/restaurants/public/:slug/tables/:token/orders should reject unwhitelisted fields (forbidNonWhitelisted) with 400', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/restaurants/public/sample-bistro/tables/tbl_token/orders')
+      .send({
+        sessionToken: 'ses_123',
+        items: [{ menuItemId: 'dish_1', quantity: 2 }],
+        paymentStatus: 'PAID', // Malicious attempt to force paid state
+        grandTotal: 0.01, // Malicious attempt to set client price
+      })
+      .expect(400);
+
+    expect(response.body.statusCode).toBe(400);
+  });
+
+  it('GET /api/v1/restaurants/public/:slug/orders/:orderReference/events should reject subscription without token query param with 401', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/restaurants/public/sample-bistro/orders/ORD-20261012-0001/events')
+      .expect(401);
+
+    expect(response.body.statusCode).toBe(401);
+  });
 });
