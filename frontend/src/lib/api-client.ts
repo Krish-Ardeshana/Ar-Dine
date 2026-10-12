@@ -12,6 +12,12 @@ import {
   ValidateCartOrderPayload,
   ValidateCartOrderResult,
 } from '@/types/session';
+import {
+  CancelOrderPayload,
+  CreateOrderPayload,
+  Order,
+  OrderStatus,
+} from '@/types/order';
 import { authStorage } from './auth-storage';
 
 const API_BASE_URL =
@@ -555,4 +561,94 @@ export async function validateCartOrder(
   });
   return handleResponse<ValidateCartOrderResult>(response);
 }
+
+// ==========================================
+// ORDER & KDS APIS (PHASE 6)
+// ==========================================
+
+export async function createOrder(
+  slug: string,
+  tableToken: string,
+  payload: CreateOrderPayload,
+): Promise<Order> {
+  const url = `${getApiBaseUrl()}/restaurants/public/${encodeURIComponent(slug)}/tables/${encodeURIComponent(tableToken)}/orders`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(payload),
+    cache: 'no-store',
+  });
+  return handleResponse<Order>(response);
+}
+
+export async function fetchPublicOrderTracking(
+  slug: string,
+  orderReference: string,
+  trackingToken: string,
+): Promise<Order> {
+  const url = `${getApiBaseUrl()}/restaurants/public/${encodeURIComponent(slug)}/orders/${encodeURIComponent(orderReference)}?token=${encodeURIComponent(trackingToken)}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+    cache: 'no-store',
+  });
+  return handleResponse<Order>(response);
+}
+
+export async function cancelPublicOrder(
+  slug: string,
+  orderReference: string,
+  trackingToken: string,
+  payload: CancelOrderPayload,
+): Promise<Order> {
+  const url = `${getApiBaseUrl()}/restaurants/public/${encodeURIComponent(slug)}/orders/${encodeURIComponent(orderReference)}/cancel?token=${encodeURIComponent(trackingToken)}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(payload),
+    cache: 'no-store',
+  });
+  return handleResponse<Order>(response);
+}
+
+export async function fetchKitchenQueue(restaurantId: string): Promise<Order[]> {
+  return fetchWithAuth(`/restaurants/${encodeURIComponent(restaurantId)}/orders/kitchen`, {
+    headers: { 'x-restaurant-id': restaurantId },
+  });
+}
+
+export async function fetchRestaurantOrders(
+  restaurantId: string,
+  status?: OrderStatus,
+): Promise<Order[]> {
+  const query = status ? `?status=${encodeURIComponent(status)}` : '';
+  return fetchWithAuth(`/restaurants/${encodeURIComponent(restaurantId)}/orders${query}`, {
+    headers: { 'x-restaurant-id': restaurantId },
+  });
+}
+
+export async function updateOrderStatus(
+  restaurantId: string,
+  orderId: string,
+  status: OrderStatus,
+): Promise<Order> {
+  return fetchWithAuth(`/restaurants/${encodeURIComponent(restaurantId)}/orders/${encodeURIComponent(orderId)}/status`, {
+    method: 'PATCH',
+    headers: { 'x-restaurant-id': restaurantId },
+    body: JSON.stringify({ status }),
+  });
+}
+
+export async function cancelStaffOrder(
+  restaurantId: string,
+  orderId: string,
+  reason?: string,
+): Promise<Order> {
+  return fetchWithAuth(`/restaurants/${encodeURIComponent(restaurantId)}/orders/${encodeURIComponent(orderId)}/cancel`, {
+    method: 'POST',
+    headers: { 'x-restaurant-id': restaurantId },
+    body: JSON.stringify({ reason }),
+  });
+}
+
 

@@ -90,6 +90,7 @@ export default function DashboardLayout({
 
   const navLinks = [
     { href: '/dashboard', label: 'Overview & Profile', icon: '🏪' },
+    { href: '/dashboard/kitchen', label: 'Kitchen Display (KDS)', icon: '👨‍🍳' },
     { href: '/dashboard/categories', label: 'Categories', icon: '📁' },
     { href: '/dashboard/menu', label: 'Dish Catalog', icon: '🍽️' },
     { href: '/dashboard/menu/new', label: 'Add New Dish', icon: '✨' },
