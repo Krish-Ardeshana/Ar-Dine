@@ -8,6 +8,7 @@ declare global {
           src?: string;
           poster?: string;
           alt?: string;
+          'ios-src'?: string;
           'camera-controls'?: boolean | string;
           'auto-rotate'?: boolean | string;
           'shadow-intensity'?: string | number;
@@ -15,6 +16,8 @@ declare global {
           exposure?: string | number;
           ar?: boolean | string;
           'ar-modes'?: string;
+          'ar-scale'?: 'auto' | 'fixed';
+          'quick-look-browsers'?: string;
           loading?: 'auto' | 'lazy' | 'eager';
           style?: React.CSSProperties;
         },

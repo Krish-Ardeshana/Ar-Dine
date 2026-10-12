@@ -343,6 +343,7 @@ export default function AddNewDishPage() {
             <ModelViewer
               modelUrl={modelMeta?.glbUrl}
               posterUrl={imageMeta?.url}
+              iosSrc={modelMeta?.usdzUrl}
               altText={name || 'Dish Preview'}
               dishName={name || 'New Dish'}
             />

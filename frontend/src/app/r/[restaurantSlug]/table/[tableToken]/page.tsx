@@ -582,6 +582,7 @@ function CustomerTableMenuContent({ params }: PageProps) {
               <ModelViewer
                 modelUrl={active3dDish.model3d?.glbUrl}
                 posterUrl={active3dDish.image?.url}
+                iosSrc={active3dDish.model3d?.usdzUrl}
                 altText={`3D Model for ${active3dDish.name}`}
                 dishName={active3dDish.name}
                 className="w-full h-full"

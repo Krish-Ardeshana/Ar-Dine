@@ -330,6 +330,7 @@ export default function MenuCatalogPage() {
             <ModelViewer
               modelUrl={previewDish.model3d?.glbUrl}
               posterUrl={previewDish.image?.url}
+              iosSrc={previewDish.model3d?.usdzUrl}
               altText={previewDish.name}
               dishName={previewDish.name}
             />

@@ -11,6 +11,7 @@ interface ModelViewerElement extends HTMLElement {
 interface ModelViewerProps {
   modelUrl?: string;
   posterUrl?: string;
+  iosSrc?: string;
   altText: string;
   dishName: string;
   className?: string;
@@ -19,6 +20,7 @@ interface ModelViewerProps {
 export function ModelViewer({
   modelUrl,
   posterUrl,
+  iosSrc,
   altText,
   dishName,
   className = '',
@@ -164,6 +166,7 @@ export function ModelViewer({
           ref={viewerRef}
           src={modelUrl}
           poster={posterUrl}
+          ios-src={iosSrc}
           alt={altText || `3D model of ${dishName}`}
           camera-controls="true"
           auto-rotate="true"
@@ -172,6 +175,8 @@ export function ModelViewer({
           exposure="1.0"
           ar="true"
           ar-modes="webxr scene-viewer quick-look"
+          ar-scale="auto"
+          quick-look-browsers="safari"
           loading="eager"
           style={{ width: '100%', height: '360px', outline: 'none' }}
         />
@@ -185,6 +190,7 @@ export function ModelViewer({
             onClick={handleResetCamera}
             className="px-3 py-1.5 text-xs font-medium rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white transition cursor-pointer"
             title="Reset Camera Angle"
+            aria-label="Reset 3D camera viewpoint"
           >
             ↺ Reset View
           </button>
@@ -194,6 +200,7 @@ export function ModelViewer({
               type="button"
               onClick={handleActivateAr}
               className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 shadow-md shadow-emerald-950 transition cursor-pointer flex items-center space-x-1.5"
+              aria-label="Launch Augmented Reality camera session"
             >
               <span>📱</span>
               <span>View in AR</span>
@@ -202,8 +209,12 @@ export function ModelViewer({
         </div>
 
         <div className="flex items-center space-x-1.5 text-[11px] text-zinc-400">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>Interactive 3D Preview</span>
+          <span
+            className={`w-2 h-2 rounded-full ${
+              isArSupported ? 'bg-emerald-400 animate-pulse' : 'bg-cyan-400'
+            }`}
+          />
+          <span>{isArSupported ? 'AR Ready (WebXR)' : 'Interactive 3D Preview'}</span>
         </div>
       </div>
     </div>
