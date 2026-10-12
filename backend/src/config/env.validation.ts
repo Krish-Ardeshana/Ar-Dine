@@ -105,6 +105,20 @@ export class EnvironmentVariables {
   @IsString()
   @IsOptional()
   CLOUDINARY_API_SECRET?: string;
+
+  /**
+   * Payment Gateway provider: 'sandbox' (default), 'razorpay', 'stripe'
+   */
+  @IsString()
+  @IsOptional()
+  PAYMENT_GATEWAY?: string;
+
+  /**
+   * Webhook signing secret for payment gateway
+   */
+  @IsString()
+  @IsOptional()
+  PAYMENT_WEBHOOK_SECRET?: string;
 }
 
 export function validate(config: Record<string, unknown>) {

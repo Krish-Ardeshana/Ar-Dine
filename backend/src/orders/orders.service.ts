@@ -507,7 +507,7 @@ export class OrdersService {
       [OrderStatus.CONFIRMED]: [OrderStatus.PREPARING, OrderStatus.CANCELLED],
       [OrderStatus.PREPARING]: [OrderStatus.READY, OrderStatus.CANCELLED],
       [OrderStatus.READY]: [OrderStatus.SERVED],
-      [OrderStatus.SERVED]: [], // Terminal fulfillment
+      [OrderStatus.SERVED]: [OrderStatus.PAID],
       [OrderStatus.PAID]: [],
       [OrderStatus.CANCELLED]: [], // Terminal cancellation
     };
@@ -529,6 +529,11 @@ export class OrdersService {
       if (isKitchenStaff && targetStatus === OrderStatus.SERVED) {
         throw new ForbiddenException(
           'Kitchen staff cannot mark orders as SERVED (requires Waiter or Admin role)',
+        );
+      }
+      if (isKitchenStaff && targetStatus === OrderStatus.PAID) {
+        throw new ForbiddenException(
+          'Kitchen staff cannot mark orders as PAID (requires Waiter or Admin role)',
         );
       }
       if (
@@ -555,6 +560,9 @@ export class OrdersService {
       updateFields.readyAt = now;
     } else if (targetStatus === OrderStatus.SERVED) {
       updateFields.servedAt = now;
+    } else if (targetStatus === OrderStatus.PAID) {
+      updateFields.completedAt = now;
+      updateFields.paymentStatus = PaymentStatus.PAID;
     } else if (targetStatus === OrderStatus.CANCELLED) {
       updateFields.cancelledAt = now;
       updateFields.cancellationReason = 'Cancelled by staff';

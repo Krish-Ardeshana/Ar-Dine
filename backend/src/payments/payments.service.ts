@@ -187,6 +187,7 @@ export class PaymentsService {
       order.paymentStatus = PaymentStatus.PAID;
       if (order.status === OrderStatus.SERVED) {
         order.status = OrderStatus.PAID;
+        order.completedAt = new Date();
       }
       await order.save();
 
@@ -254,6 +255,10 @@ export class PaymentsService {
       const order = await this.orderModel.findById(payment.orderId);
       if (order) {
         order.paymentStatus = PaymentStatus.PAID;
+        if (order.status === OrderStatus.SERVED) {
+          order.status = OrderStatus.PAID;
+          order.completedAt = new Date();
+        }
         await order.save();
         this.orderEventsService.emitOrderEvent(
           'ORDER_UPDATED',

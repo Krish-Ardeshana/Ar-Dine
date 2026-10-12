@@ -427,6 +427,82 @@ describe('OrdersService', () => {
         ),
       ).rejects.toThrow(ForbiddenException);
     });
+
+    it('allows waiter or admin to transition SERVED order to PAID with completedAt and paymentStatus', async () => {
+      const orderId = new Types.ObjectId();
+      const mockOrder = {
+        _id: orderId,
+        restaurantId: validRestaurantId,
+        status: OrderStatus.SERVED,
+        paymentStatus: PaymentStatus.PENDING,
+        tableId: mockTableDoc,
+        items: [],
+      };
+
+      mockOrderModel.findOne.mockReturnValue({
+        populate: vi.fn().mockResolvedValue(mockOrder),
+      });
+
+      const updatedOrder = {
+        ...mockOrder,
+        status: OrderStatus.PAID,
+        paymentStatus: PaymentStatus.PAID,
+        completedAt: new Date(),
+      };
+
+      mockOrderModel.findOneAndUpdate.mockReturnValue({
+        populate: vi.fn().mockResolvedValue(updatedOrder),
+      });
+
+      const result = await service.updateOrderStatus(
+        validRestaurantId.toString(),
+        orderId.toString(),
+        OrderStatus.PAID,
+        [UserRole.WAITER],
+      );
+
+      expect(result.status).toBe(OrderStatus.PAID);
+      expect(result.paymentStatus).toBe(PaymentStatus.PAID);
+      expect(mockOrderModel.findOneAndUpdate).toHaveBeenCalledWith(
+        {
+          _id: orderId,
+          restaurantId: validRestaurantId,
+          status: OrderStatus.SERVED,
+        },
+        expect.objectContaining({
+          $set: expect.objectContaining({
+            status: OrderStatus.PAID,
+            paymentStatus: PaymentStatus.PAID,
+            completedAt: expect.any(Date),
+          }),
+        }),
+        expect.anything(),
+      );
+    });
+
+    it('rejects kitchen staff attempting to transition SERVED order to PAID (403 Forbidden)', async () => {
+      const orderId = new Types.ObjectId();
+      const mockOrder = {
+        _id: orderId,
+        restaurantId: validRestaurantId,
+        status: OrderStatus.SERVED,
+        tableId: mockTableDoc,
+        items: [],
+      };
+
+      mockOrderModel.findOne.mockReturnValue({
+        populate: vi.fn().mockResolvedValue(mockOrder),
+      });
+
+      await expect(
+        service.updateOrderStatus(
+          validRestaurantId.toString(),
+          orderId.toString(),
+          OrderStatus.PAID,
+          [UserRole.KITCHEN_STAFF],
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
   });
 
   describe('Customer Tracking & Cancellation', () => {

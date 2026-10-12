@@ -264,5 +264,39 @@ describe('PaymentsService', () => {
       const res = await service.handleWebhook('{}', 'good_sig');
       expect(res).toEqual({ received: true, status: 'already_processed' });
     });
+
+    it('should transition SERVED order to PAID and set completedAt on successful webhook', async () => {
+      mockSandboxGateway.verifyWebhookSignature.mockResolvedValue({
+        isValid: true,
+        transactionReference: 'PAY-123',
+        status: PaymentTransactionStatus.SUCCESS,
+        providerPaymentId: 'prov-pay-999',
+      });
+
+      const paymentDoc = {
+        transactionReference: 'PAY-123',
+        orderId: new Types.ObjectId(),
+        status: PaymentTransactionStatus.PENDING,
+        save: vi.fn().mockResolvedValue(true),
+      };
+      mockPaymentModel.findOne.mockResolvedValue(paymentDoc);
+
+      const orderDoc = {
+        status: OrderStatus.SERVED,
+        paymentStatus: PaymentStatus.PENDING,
+        completedAt: undefined as any,
+        trackingToken: 'trk_test',
+        items: [],
+        save: vi.fn().mockResolvedValue(true),
+      };
+      mockOrderModel.findById.mockResolvedValue(orderDoc);
+
+      const res = await service.handleWebhook('{}', 'good_sig');
+      expect(res).toEqual({ received: true, status: PaymentTransactionStatus.SUCCESS });
+      expect(orderDoc.paymentStatus).toBe(PaymentStatus.PAID);
+      expect(orderDoc.status).toBe(OrderStatus.PAID);
+      expect(orderDoc.completedAt).toBeInstanceOf(Date);
+      expect(orderDoc.save).toHaveBeenCalled();
+    });
   });
 });
