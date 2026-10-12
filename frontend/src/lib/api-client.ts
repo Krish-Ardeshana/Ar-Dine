@@ -651,4 +651,79 @@ export async function cancelStaffOrder(
   });
 }
 
+export interface InitiatePaymentPayload {
+  idempotencyKey: string;
+  paymentMethod?: string;
+}
+
+export interface ConfirmPaymentPayload {
+  transactionReference: string;
+  providerPaymentId?: string;
+}
+
+export interface PaymentTransactionResponse {
+  transactionReference: string;
+  orderId: string;
+  restaurantId: string;
+  amount: number;
+  currency: string;
+  status: string;
+  provider: string;
+  providerPaymentId?: string;
+  providerOrderId?: string;
+  clientSecret?: string;
+  checkoutUrl?: string;
+  completedAt?: string;
+  createdAt: string;
+}
+
+export async function initiateCustomerPayment(
+  restaurantSlug: string,
+  orderReference: string,
+  trackingToken: string,
+  payload: InitiatePaymentPayload,
+): Promise<PaymentTransactionResponse> {
+  const url = `${getApiBaseUrl()}/restaurants/public/${encodeURIComponent(
+    restaurantSlug,
+  )}/orders/${encodeURIComponent(orderReference)}/payments/initiate?token=${encodeURIComponent(
+    trackingToken,
+  )}`;
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return handleResponse<PaymentTransactionResponse>(res);
+}
+
+export async function confirmCustomerPayment(
+  restaurantSlug: string,
+  orderReference: string,
+  trackingToken: string,
+  payload: ConfirmPaymentPayload,
+): Promise<PaymentTransactionResponse> {
+  const url = `${getApiBaseUrl()}/restaurants/public/${encodeURIComponent(
+    restaurantSlug,
+  )}/orders/${encodeURIComponent(orderReference)}/payments/confirm?token=${encodeURIComponent(
+    trackingToken,
+  )}`;
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return handleResponse<PaymentTransactionResponse>(res);
+}
+
+
 

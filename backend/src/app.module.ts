@@ -11,6 +11,7 @@ import { RestaurantsModule } from './restaurants/restaurants.module.js';
 import { TablesModule } from './tables/tables.module.js';
 import { DiningSessionsModule } from './dining-sessions/dining-sessions.module.js';
 import { OrdersModule } from './orders/orders.module.js';
+import { PaymentsModule } from './payments/payments.module.js';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { OrdersModule } from './orders/orders.module.js';
     TablesModule,
     DiningSessionsModule,
     OrdersModule,
+    PaymentsModule,
   ],
 })
 export class AppModule {}
