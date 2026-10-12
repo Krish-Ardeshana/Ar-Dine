@@ -70,6 +70,34 @@ export class EnvironmentVariables {
   @IsString()
   @IsOptional()
   JWT_SECRET?: string;
+
+  /**
+   * Local media asset storage directory (defaults to './storage')
+   */
+  @IsString()
+  @IsOptional()
+  STORAGE_DIR: string = './storage';
+
+  /**
+   * Optional Cloudinary Cloud Name
+   */
+  @IsString()
+  @IsOptional()
+  CLOUDINARY_CLOUD_NAME?: string;
+
+  /**
+   * Optional Cloudinary API Key
+   */
+  @IsString()
+  @IsOptional()
+  CLOUDINARY_API_KEY?: string;
+
+  /**
+   * Optional Cloudinary API Secret
+   */
+  @IsString()
+  @IsOptional()
+  CLOUDINARY_API_SECRET?: string;
 }
 
 export function validate(config: Record<string, unknown>) {
@@ -97,6 +125,11 @@ export function validate(config: Record<string, unknown>) {
     if (!validatedConfig.JWT_REFRESH_SECRET || validatedConfig.JWT_REFRESH_SECRET.length < 32) {
       throw new Error(
         'Production security violation: JWT_REFRESH_SECRET must be configured with at least 32 cryptographically random characters in production',
+      );
+    }
+    if (validatedConfig.CORS_ORIGIN && validatedConfig.CORS_ORIGIN.trim() === '*') {
+      throw new Error(
+        'Production security violation: CORS_ORIGIN cannot be set to wildcard (*) when credentialed access is enabled',
       );
     }
   }

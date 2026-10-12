@@ -1,0 +1,75 @@
+# ==============================================================================
+# AR-DINE Local Production Simulation & Staging Compose Configuration
+# ==============================================================================
+
+services:
+  # MongoDB persistent replica / standalone database
+  mongo:
+    image: mongo:7.0
+    container_name: ardine-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - ardine-network
+
+  # NestJS API Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ardine-backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - MONGODB_URI=mongodb://mongo:27017/ar_dine
+      - CORS_ORIGIN=http://localhost:3000
+      - FRONTEND_BASE_URL=http://localhost:3000
+      - JWT_ACCESS_SECRET=ardine_production_access_secret_32_chars_minimum_example
+      - JWT_REFRESH_SECRET=ardine_production_refresh_secret_32_chars_minimum_example
+      - STORAGE_DIR=/usr/src/app/storage
+    volumes:
+      - backend_storage:/usr/src/app/storage
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - ardine-network
+
+  # Next.js App Router Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ardine-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api/v1
+    depends_on:
+      - backend
+    networks:
+      - ardine-network
+
+volumes:
+  mongo_data:
+    driver: local
+  backend_storage:
+    driver: local
+
+networks:
+  ardine-network:
+    driver: bridge
