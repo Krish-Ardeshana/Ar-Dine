@@ -35,8 +35,9 @@ import {
         return {
           uri: uri && uri.trim().length > 0 ? uri : defaultUri,
           lazyConnection: true,
-          serverSelectionTimeoutMS: 3000,
-          connectTimeoutMS: 5000,
+          serverSelectionTimeoutMS: 10000,
+          connectTimeoutMS: 15000,
+          socketTimeoutMS: 45000,
           autoIndex: configService.get<string>('NODE_ENV') !== 'production',
         };
       },

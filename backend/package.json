@@ -20,6 +20,7 @@
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
+    "test:staging": "node test/verify-atlas-staging.mjs",
     "seed": "nest build && node dist/database/seed.js"
   },
   "dependencies": {
