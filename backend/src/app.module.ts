@@ -10,6 +10,7 @@ import { MenuItemsModule } from './menu-items/menu-items.module.js';
 import { RestaurantsModule } from './restaurants/restaurants.module.js';
 import { TablesModule } from './tables/tables.module.js';
 import { DiningSessionsModule } from './dining-sessions/dining-sessions.module.js';
+import { OrdersModule } from './orders/orders.module.js';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { DiningSessionsModule } from './dining-sessions/dining-sessions.module.j
     MediaModule,
     TablesModule,
     DiningSessionsModule,
+    OrdersModule,
   ],
 })
 export class AppModule {}

@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import crypto from 'node:crypto';
 
 export type OrderDocument = Order & Document;
 
@@ -118,6 +119,28 @@ export class Order {
 
   @Prop({ trim: true })
   cancellationReason?: string;
+
+  @Prop({ trim: true })
+  cancelledBy?: string;
+
+  /**
+   * Cryptographically secure tracking token returned to the customer upon placement.
+   * Format: `trk_<16-byte-hex>`.
+   */
+  @Prop({
+    type: String,
+    required: true,
+    trim: true,
+    index: true,
+    default: () => `trk_${crypto.randomBytes(16).toString('hex')}`,
+  })
+  trackingToken: string;
+
+  /**
+   * Optional client idempotency key to prevent double submissions.
+   */
+  @Prop({ trim: true, sparse: true })
+  idempotencyKey?: string;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);
@@ -126,3 +149,5 @@ export const OrderSchema = SchemaFactory.createForClass(Order);
 OrderSchema.index({ restaurantId: 1, status: 1, createdAt: -1 });
 OrderSchema.index({ restaurantId: 1, createdAt: -1 });
 OrderSchema.index({ restaurantId: 1, tableId: 1, status: 1 });
+OrderSchema.index({ restaurantId: 1, idempotencyKey: 1 }, { unique: true, sparse: true });
+OrderSchema.index({ trackingToken: 1 });
