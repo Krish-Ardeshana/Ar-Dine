@@ -151,4 +151,35 @@ The following security properties are verified by automated tests in `vitest`:
   - `KITCHEN_STAFF` cannot advance `SERVED` state (requires `WAITER` or `RESTAURANT_ADMIN`).
   - Customer can cancel orders strictly while in `PLACED` state.
 
+---
+
+## 7. Phase 7 Comprehensive Security Audit & Hardening Findings
+
+### 7.1 Quantitative Input Constraints & DoS Prevention
+- **Vulnerability Identified:** Lack of explicit upper bounds on order item quantities allowed attackers to submit payloads with integer quantities like `99,999,999`, creating computational and storage strain.
+- **Remediation Implemented:** Applied `@Max(50, { message: 'Quantity cannot exceed 50 per item' })` and `@MaxLength(200)` on `CreateOrderItemDto` and `ValidateOrderItemDto`. Enforced via centralized `ValidationPipe`.
+- **Verification:** Verified by unit tests and E2E test `POST /api/v1/restaurants/public/:slug/tables/:token/orders should reject excessive quantity (>50) with 400 Bad Request`.
+
+### 7.2 Strict Non-Whitelisted Property Rejection
+- **Vulnerability Identified:** Attackers attempting parameter injection to override internal order fields (e.g. `paymentStatus`, `grandTotal`, `isArchived`).
+- **Remediation Implemented:** Configured `ValidationPipe` with `whitelist: true` and `forbidNonWhitelisted: true`. Unknown fields trigger an immediate `400 Bad Request`.
+- **Verification:** Verified by E2E test `POST /api/v1/restaurants/public/:slug/tables/:token/orders should reject unwhitelisted fields (forbidNonWhitelisted) with 400`.
+
+### 7.3 Real-Time SSE Capability Stream Hardening
+- **Vulnerability Identified:** The customer SSE stream endpoint did not validate tracking tokens upfront, allowing unauthorized clients to open persistent HTTP connections.
+- **Remediation Implemented:**
+  1. `OrdersController.streamCustomerOrderEvents` requires a valid non-empty `token` query parameter, throwing `401 Unauthorized` upfront.
+  2. `OrderEventsService.streamForOrder` strictly checks `event.trackingToken === cleanToken` in RxJS filter operators.
+- **Verification:** Verified by unit tests in `order-events.service.spec.ts` and E2E test `GET /api/v1/restaurants/public/:slug/orders/:orderReference/events should reject subscription without token query param with 401`.
+
+### 7.4 Query Result Pagination Bounds
+- **Vulnerability Identified:** Unbounded `limit` query parameters on `GET /restaurants/:id/orders` allowed requesting arbitrary batch sizes.
+- **Remediation Implemented:** Enforced an upper-bound cap: `const safeLimit = Math.min(Math.max(1, Number(limit) || 50), 100);` in `OrdersService.getRestaurantOrders`.
+- **Verification:** Verified in `orders.service.spec.ts`.
+
+### 7.5 Path Traversal & Media Validation
+- **Defense Implemented:** `LocalStorageProvider` normalizes paths and verifies `absoluteTarget.startsWith(baseStorageDir)`. `MediaService` inspects binary headers (magic numbers) for JPEG (`FF D8 FF`), PNG (`89 50 4E 47`), WebP (`RIFF` + `WEBP`), and GLB (`glTF`). Non-conforming or oversized files are rejected before disk writing.
+- **Verification:** Verified by 8 unit tests in `media.service.spec.ts`.
+
+
 
