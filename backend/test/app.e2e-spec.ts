@@ -122,4 +122,38 @@ describe('App & Auth Endpoints (e2e)', () => {
 
     expect(response.body.statusCode).toBe(400);
   });
+
+  it('POST /api/v1/restaurants/public/:slug/tables/:token/orders should reject invalid order payload with 400', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/restaurants/public/sample-bistro/tables/tbl_token/orders')
+      .send({ sessionToken: 'ses_123', items: [] })
+      .expect(400);
+
+    expect(response.body.statusCode).toBe(400);
+  });
+
+  it('GET /api/v1/restaurants/:id/orders should reject unauthenticated request with 401', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/restaurants/6640a1b2c3d4e5f6a7b8c9d0/orders')
+      .expect(401);
+
+    expect(response.body.statusCode).toBe(401);
+  });
+
+  it('GET /api/v1/restaurants/:id/orders/kitchen should reject unauthenticated request with 401', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/restaurants/6640a1b2c3d4e5f6a7b8c9d0/orders/kitchen')
+      .expect(401);
+
+    expect(response.body.statusCode).toBe(401);
+  });
+
+  it('PATCH /api/v1/restaurants/:id/orders/:orderId/status should reject unauthenticated request with 401', async () => {
+    const response = await request(app.getHttpServer())
+      .patch('/api/v1/restaurants/6640a1b2c3d4e5f6a7b8c9d0/orders/6640a1b2c3d4e5f6a7b8c9d1/status')
+      .send({ status: 'CONFIRMED' })
+      .expect(401);
+
+    expect(response.body.statusCode).toBe(401);
+  });
 });
