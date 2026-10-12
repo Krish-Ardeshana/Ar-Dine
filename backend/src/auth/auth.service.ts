@@ -100,8 +100,6 @@ export class AuthService {
       sub: user._id.toString(),
       email: user.email,
       globalRoles: user.globalRoles || [UserRole.CUSTOMER],
-      iss: this.issuer,
-      aud: this.audience,
     };
 
     const [accessToken, refreshToken] = await Promise.all([

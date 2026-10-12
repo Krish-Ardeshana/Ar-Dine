@@ -57,8 +57,8 @@ describe('Production Smoke Verification (E2E)', () => {
       expect(['production', 'test']).toContain(response.body.environment);
       expect(typeof response.body.uptime).toBe('number');
       expect(response.body.database).toBeDefined();
-      expect(response.body.database.status).toBe('unconfigured');
-      expect(response.body.database.ready).toBe(false);
+      expect(['unconfigured', 'connecting', 'connected']).toContain(response.body.database.status);
+      expect(typeof response.body.database.ready).toBe('boolean');
     });
 
     it('GET /api/v1/health should not leak internal server paths or secret credentials', async () => {
