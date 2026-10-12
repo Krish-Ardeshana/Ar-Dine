@@ -3,11 +3,14 @@ import {
   ForbiddenException,
   Injectable,
   Logger,
+  Optional,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import crypto from 'crypto';
 import path from 'path';
 import { TenantHelper } from '../database/multi-tenant/tenant.helper.js';
 import { ImageMetadata, Model3DMetadata } from '../database/schemas/menu-item.schema.js';
+import { CloudinaryStorageProvider } from './providers/cloudinary-storage.provider.js';
 import { LocalStorageProvider } from './providers/local-storage.provider.js';
 import { IStorageProvider, UploadedFileDto } from './storage.interface.js';
 
@@ -21,9 +24,32 @@ export class MediaService {
   private readonly logger = new Logger(MediaService.name);
   private readonly storageProvider: IStorageProvider;
 
-  constructor(localStorageProvider: LocalStorageProvider) {
-    // Uses LocalStorageProvider for reliable zero-dependency execution
-    this.storageProvider = localStorageProvider;
+  constructor(
+    localStorageProvider: LocalStorageProvider,
+    @Optional() cloudinaryStorageProvider?: CloudinaryStorageProvider,
+    @Optional() configService?: ConfigService,
+  ) {
+    const configuredProvider =
+      configService?.get<string>('STORAGE_PROVIDER', 'local')?.toLowerCase() || 'local';
+
+    if (configuredProvider === 'cloudinary') {
+      if (cloudinaryStorageProvider && cloudinaryStorageProvider.isAvailable()) {
+        this.storageProvider = cloudinaryStorageProvider;
+        this.logger.log('MediaService active provider: CloudinaryStorageProvider');
+      } else {
+        this.logger.warn(
+          'STORAGE_PROVIDER is set to cloudinary, but credentials are incomplete or provider is unavailable. Falling back safely to LocalStorageProvider.',
+        );
+        this.storageProvider = localStorageProvider;
+      }
+    } else {
+      this.storageProvider = localStorageProvider;
+      this.logger.log('MediaService active provider: LocalStorageProvider');
+    }
+  }
+
+  get activeStorageProviderName(): string {
+    return this.storageProvider.name;
   }
 
   /**

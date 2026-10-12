@@ -79,6 +79,13 @@ export class EnvironmentVariables {
   STORAGE_DIR: string = './storage';
 
   /**
+   * Active media storage provider: 'local' (default) or 'cloudinary'
+   */
+  @IsString()
+  @IsOptional()
+  STORAGE_PROVIDER: string = 'local';
+
+  /**
    * Optional Cloudinary Cloud Name
    */
   @IsString()

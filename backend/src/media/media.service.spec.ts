@@ -158,4 +158,34 @@ describe('MediaService', () => {
       expect(mockStorageProvider.deleteFile).toHaveBeenCalledWith(ownStorageKey);
     });
   });
+
+  describe('Provider Selection and Fallback', () => {
+    it('should default to LocalStorageProvider when STORAGE_PROVIDER is unset', () => {
+      const localProvider = { name: 'local-disk', isAvailable: () => true } as any;
+      const mediaService = new MediaService(localProvider);
+      expect(mediaService.activeStorageProviderName).toBe('local-disk');
+    });
+
+    it('should use CloudinaryStorageProvider when configured and available', () => {
+      const localProvider = { name: 'local-disk', isAvailable: () => true } as any;
+      const cloudProvider = { name: 'cloudinary', isAvailable: () => true } as any;
+      const configService = {
+        get: (key: string) => (key === 'STORAGE_PROVIDER' ? 'cloudinary' : undefined),
+      } as any;
+
+      const mediaService = new MediaService(localProvider, cloudProvider, configService);
+      expect(mediaService.activeStorageProviderName).toBe('cloudinary');
+    });
+
+    it('should fall back to LocalStorageProvider when Cloudinary is selected but unavailable', () => {
+      const localProvider = { name: 'local-disk', isAvailable: () => true } as any;
+      const cloudProvider = { name: 'cloudinary', isAvailable: () => false } as any;
+      const configService = {
+        get: (key: string) => (key === 'STORAGE_PROVIDER' ? 'cloudinary' : undefined),
+      } as any;
+
+      const mediaService = new MediaService(localProvider, cloudProvider, configService);
+      expect(mediaService.activeStorageProviderName).toBe('local-disk');
+    });
+  });
 });

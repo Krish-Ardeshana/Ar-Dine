@@ -32,11 +32,15 @@ export class LocalStorageProvider implements IStorageProvider {
     storagePath: string,
   ): Promise<StorageUploadResult> {
     // Prevent path traversal
-    const normalizedStorageKey = path.normalize(storagePath).replace(/^(\.\.(\/|\\|$))+/, '');
+    if (storagePath.includes('..')) {
+      throw new BadRequestException('Security violation: Path traversal detected');
+    }
+
+    const normalizedStorageKey = path.normalize(storagePath).replace(/^(\/|\\)+/, '');
     const absoluteTarget = path.resolve(this.baseStorageDir, normalizedStorageKey);
 
-    // Verify path stays within base directory
-    if (!absoluteTarget.startsWith(this.baseStorageDir)) {
+    const relative = path.relative(this.baseStorageDir, absoluteTarget);
+    if (relative.startsWith('..') || path.isAbsolute(relative)) {
       throw new BadRequestException('Security violation: Path traversal detected');
     }
 
@@ -60,17 +64,26 @@ export class LocalStorageProvider implements IStorageProvider {
   }
 
   async deleteFile(storageKey: string): Promise<void> {
-    const normalizedStorageKey = path.normalize(storageKey).replace(/^(\.\.(\/|\\|$))+/, '');
+    if (storageKey.includes('..')) {
+      throw new BadRequestException('Security violation: Path traversal detected');
+    }
+
+    const normalizedStorageKey = path.normalize(storageKey).replace(/^(\/|\\)+/, '');
     const absoluteTarget = path.resolve(this.baseStorageDir, normalizedStorageKey);
 
-    if (!absoluteTarget.startsWith(this.baseStorageDir)) {
+    const relative = path.relative(this.baseStorageDir, absoluteTarget);
+    if (relative.startsWith('..') || path.isAbsolute(relative)) {
       throw new BadRequestException('Security violation: Path traversal detected');
     }
 
     if (fs.existsSync(absoluteTarget)) {
-      await fs.promises.unlink(absoluteTarget).catch((err) => {
-        this.logger.warn(`Failed to delete local asset: ${err.message}`);
-      });
+      const stat = await fs.promises.stat(absoluteTarget);
+      if (stat.isFile()) {
+        await fs.promises.unlink(absoluteTarget).catch((err: Error) => {
+          this.logger.warn(`Failed to delete local asset: ${err.message}`);
+          throw new BadRequestException('Failed to delete asset from disk storage');
+        });
+      }
     }
   }
 }
