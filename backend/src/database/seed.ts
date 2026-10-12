@@ -17,6 +17,15 @@ import {
  * Idempotent: multiple executions upsert without duplicating records.
  */
 async function runSeed() {
+  // Automatically load local .env file if available
+  try {
+    if (typeof (process as any).loadEnvFile === 'function') {
+      (process as any).loadEnvFile('.env');
+    }
+  } catch {
+    // Ignore if .env is missing or already set in shell
+  }
+
   const nodeEnv = process.env.NODE_ENV || 'development';
 
   if (nodeEnv === 'production') {
