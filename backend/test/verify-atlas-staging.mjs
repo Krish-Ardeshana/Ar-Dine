@@ -38,7 +38,7 @@ async function verifyAtlasStaging() {
   console.log('\n[Check 2: Restaurant Resolution]');
   const restaurant = await db.collection('restaurants').findOne({ slug: 'spice-craft-kitchen' });
   if (!restaurant) throw new Error('Seeded restaurant spice-craft-kitchen not found');
-  console.log(`Resolved: ${restaurant.name} (Slug: ${restaurant.slug}, ID: ${restaurant._id})`);
+  console.log(`Resolved: ${restaurant.name} (Slug: ${restaurant.slug}, ID: ${restaurant._id.toString()})`);
 
   // 3. Resolve Table & Stable QR Token
   console.log('\n[Check 3: Table QR Resolution]');
@@ -112,7 +112,7 @@ async function verifyAtlasStaging() {
     createdAt: new Date(),
     updatedAt: new Date(),
   });
-  console.log(`Order Placed Successfully: ${orderNumber} (ID: ${orderResult.insertedId})`);
+  console.log(`Order Placed Successfully: ${orderNumber} (ID: ${orderResult.insertedId.toString()})`);
 
   // 7. Compound Idempotency Verification
   console.log('\n[Check 7: Idempotent Duplicate Protection]');
