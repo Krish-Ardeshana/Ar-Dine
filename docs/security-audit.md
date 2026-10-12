@@ -124,3 +124,31 @@ The following security properties are verified by automated tests in `vitest`:
 - **Threat:** Attacker uses an expired or foreign dining session token.
 - **Defense Implemented:** Independent application-level expiration logic (`session.expiresAt <= new Date()`). Stale sessions are automatically transitioned to `EXPIRED` status, preventing unauthorized order submission.
 
+---
+
+## 6. Phase 6 Order Lifecycle, KDS & Concurrency Security
+
+### 6.1 Server-Authoritative Price Snapshots & Immunity to Client Manipulation
+- **Threat:** Malicious customers tampering with HTTP payloads to manipulate dish prices, tax rates, subtotals, or grand totals.
+- **Defense Implemented:** `OrdersService.createOrder` accepts only dish IDs, quantities, and special instructions. Unit prices are retrieved exclusively from active database records. Subtotals, 5% tax, and grand totals are calculated authoritatively on the backend. Historical item details and prices are snapshotted immutably into `items` subdocuments. Subsequent dish price increases or deletions never affect historical orders.
+
+### 6.2 Database-Enforced Idempotency & Duplicate Protection
+- **Threat:** Double-clicking submit, network retry loops, or aggressive re-submissions creating duplicate orders in the kitchen.
+- **Defense Implemented:** Database unique compound index `{ restaurantId: 1, idempotencyKey: 1 }` (sparse). Retrying with the same idempotency key and identical payload safely returns the existing order. Submitting the same key with conflicting items or quantities throws a `409 Conflict`.
+
+### 6.3 Concurrency-Safe State Machine & Race Condition Immunity
+- **Threat:** Simultaneous cancellation by a diner racing with kitchen staff accepting or cooking an order, leading to inconsistent terminal states.
+- **Defense Implemented:** Centralized lifecycle state machine in `OrdersService.updateOrderStatus` and `cancelPublicOrder`. All mutations utilize atomic conditional updates `findOneAndUpdate({ _id, restaurantId, status: currentStatus }, ...)`. Conflicting concurrent requests fail with `409 Conflict`.
+
+### 6.4 Secure Tracking Capabilities & Guest Privacy
+- **Threat:** Attackers guessing sequential order numbers or using table QR tokens to eavesdrop on other customers' orders.
+- **Defense Implemented:** Each order generates a high-entropy capability token (`trk_<16-byte-hex>`). Public order retrieval and cancellation strictly require matching tracking tokens. In addition, sensitive internal tracking tokens are stripped from staff KDS lists and public listings.
+
+### 6.5 Strict Role-Based Access Control in Kitchen Workflow
+- **Threat:** Waitstaff prematurely marking cooking states or kitchen staff marking orders served without table verification.
+- **Defense Implemented:** State machine enforces actor role constraints:
+  - `WAITER` cannot advance `PREPARING` or `READY` states (requires `KITCHEN_STAFF` or `RESTAURANT_ADMIN`).
+  - `KITCHEN_STAFF` cannot advance `SERVED` state (requires `WAITER` or `RESTAURANT_ADMIN`).
+  - Customer can cancel orders strictly while in `PLACED` state.
+
+

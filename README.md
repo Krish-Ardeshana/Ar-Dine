@@ -116,5 +116,5 @@ For detailed setup, see [docs/development-setup.md](file:///d:/AR_Dine/docs/deve
 - [x] **Phase 3:** Authentication & Role-Based Access Control (JWT + RBAC + Multi-Tenant Guards)
 - [x] **Phase 4:** Menu Management & 3D/AR Asset Integration (Google model-viewer + WebXR Pipeline)
 - [x] **Phase 5:** Table QR & Customer Ordering Flow (Stable QR Generation, Dining Session Lifecycle & Customer Menu)
-- [ ] **Phase 6:** Order Lifecycle State Machine & Real-Time Sync
+- [x] **Phase 6:** Order Lifecycle State Machine, Kitchen Display System & Real-Time Synchronization (Idempotent Orders, KDS at `/dashboard/kitchen`, Customer Tracking at `/r/[slug]/order/[ref]`, SSE Streams)
 - [ ] **Phase 7:** Testing, Security Hardening & Production Verification
