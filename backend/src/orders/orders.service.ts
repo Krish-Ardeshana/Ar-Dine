@@ -414,11 +414,13 @@ export class OrdersService {
       filter.status = status;
     }
 
+    const safeLimit = Math.min(Math.max(1, Number(limit) || 50), 100);
+
     const orders = await this.orderModel
       .find(filter)
       .populate<{ tableId: RestaurantTableDocument }>('tableId')
       .sort({ createdAt: -1 })
-      .limit(limit);
+      .limit(safeLimit);
 
     return orders.map((o) =>
       this.toResponseDto(o, (o.tableId as any)?.tableNumber, false),
@@ -584,7 +586,7 @@ export class OrdersService {
       false,
     );
 
-    this.orderEventsService.emitOrderEvent('ORDER_UPDATED', responseDto);
+    this.orderEventsService.emitOrderEvent('ORDER_UPDATED', responseDto, updated.trackingToken);
     return responseDto;
   }
 
@@ -642,7 +644,7 @@ export class OrdersService {
       false,
     );
 
-    this.orderEventsService.emitOrderEvent('ORDER_CANCELLED', responseDto);
+    this.orderEventsService.emitOrderEvent('ORDER_CANCELLED', responseDto, updated.trackingToken);
     return responseDto;
   }
 }

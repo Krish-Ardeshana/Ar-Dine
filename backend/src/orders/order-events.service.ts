@@ -1,4 +1,4 @@
-import { Injectable, Logger, MessageEvent } from '@nestjs/common';
+import { Injectable, Logger, MessageEvent, UnauthorizedException } from '@nestjs/common';
 import { filter, map, Observable, Subject } from 'rxjs';
 import { OrderResponseDto } from './dto/order-response.dto.js';
 
@@ -22,12 +22,13 @@ export class OrderEventsService {
   emitOrderEvent(
     type: 'ORDER_PLACED' | 'ORDER_UPDATED' | 'ORDER_CANCELLED',
     order: OrderResponseDto,
+    trackingTokenOverride?: string,
   ): void {
     const payload: OrderEventPayload = {
       type,
       restaurantId: order.restaurantId,
       orderNumber: order.orderNumber,
-      trackingToken: order.trackingToken,
+      trackingToken: trackingTokenOverride || order.trackingToken,
       order,
       timestamp: new Date().toISOString(),
     };
@@ -52,13 +53,19 @@ export class OrderEventsService {
 
   /**
    * Stream filtered specifically for a customer tracking session by orderNumber and trackingToken.
+   * Enforces matching capability token so guests cannot spy on other orders.
    */
   streamForOrder(orderNumber: string, trackingToken: string): Observable<MessageEvent> {
+    if (!trackingToken || trackingToken.trim().length === 0) {
+      throw new UnauthorizedException('Order tracking stream requires a valid tracking token');
+    }
+    const cleanToken = trackingToken.trim();
+
     return this.orderEvent$.asObservable().pipe(
       filter(
         (event) =>
           event.orderNumber === orderNumber &&
-          (!event.trackingToken || event.trackingToken === trackingToken),
+          event.trackingToken === cleanToken,
       ),
       map((event) => ({
         data: event,

@@ -10,6 +10,7 @@ import {
   Post,
   Query,
   Sse,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
@@ -84,6 +85,7 @@ export class OrdersController {
 
   /**
    * Public: Real-time SSE stream for customer order tracking.
+   * Requires matching tracking token to subscribe.
    */
   @Public()
   @Sse('restaurants/public/:slug/orders/:orderReference/events')
@@ -91,6 +93,9 @@ export class OrdersController {
     @Param('orderReference') orderReference: string,
     @Query('token') trackingToken: string,
   ): Observable<MessageEvent> {
+    if (!trackingToken || trackingToken.trim().length === 0) {
+      throw new UnauthorizedException('Order event stream requires a valid tracking token');
+    }
     return this.orderEventsService.streamForOrder(orderReference, trackingToken);
   }
 

@@ -6,6 +6,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
   Min,
   ValidateNested,
@@ -18,6 +19,7 @@ export class CreateOrderItemDto {
 
   @IsInt()
   @Min(1, { message: 'Quantity must be at least 1' })
+  @Max(50, { message: 'Quantity cannot exceed 50 per item' })
   quantity: number;
 
   @IsString()
