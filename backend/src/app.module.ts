@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module.js';
 import { CategoriesModule } from './categories/categories.module.js';
@@ -12,6 +12,8 @@ import { TablesModule } from './tables/tables.module.js';
 import { DiningSessionsModule } from './dining-sessions/dining-sessions.module.js';
 import { OrdersModule } from './orders/orders.module.js';
 import { PaymentsModule } from './payments/payments.module.js';
+import { SecurityHeadersMiddleware } from './common/middleware/security-headers.middleware.js';
+import { RateLimitMiddleware } from './common/middleware/rate-limit.middleware.js';
 
 @Module({
   imports: [
@@ -33,4 +35,11 @@ import { PaymentsModule } from './payments/payments.module.js';
     PaymentsModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(SecurityHeadersMiddleware, RateLimitMiddleware)
+      .forRoutes('*');
+  }
+}
+

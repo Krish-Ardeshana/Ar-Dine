@@ -181,5 +181,57 @@ The following security properties are verified by automated tests in `vitest`:
 - **Defense Implemented:** `LocalStorageProvider` normalizes paths and verifies `absoluteTarget.startsWith(baseStorageDir)`. `MediaService` inspects binary headers (magic numbers) for JPEG (`FF D8 FF`), PNG (`89 50 4E 47`), WebP (`RIFF` + `WEBP`), and GLB (`glTF`). Non-conforming or oversized files are rejected before disk writing.
 - **Verification:** Verified by 8 unit tests in `media.service.spec.ts`.
 
+---
+
+## 8. Phase 12 Payment Subsystem Threat Model & Controls
+
+### 8.1 Timing-Safe Webhook & Signature Verification
+- **Threat:** Attackers forge or tamper with payment provider webhooks or client-returned signatures to falsely mark orders as paid.
+- **Defense Implemented:**
+  - `SandboxPaymentGateway` computes HMAC-SHA256 over canonical payment payloads (`orderId:amount:currency`).
+  - Buffers are compared using Node.js `crypto.timingSafeEqual` with upfront length parity checks to prevent timing disclosure attacks.
+- **Verification:** Verified by unit tests in `sandbox-payment-gateway.spec.ts`.
+
+### 8.2 Client-Side Settlement Tampering
+- **Threat:** Malicious diner attempts to settle an order for less than the total bill.
+- **Defense Implemented:**
+  - `PaymentsService.initiatePayment` ignores client-submitted amounts. The backend authoritatively fetches the `Order` from MongoDB and retrieves `order.grandTotal`.
+- **Verification:** Verified in `payments.service.spec.ts`.
+
+### 8.3 Idempotent Transactions & Replay Defense
+- **Threat:** Network reconnects or duplicate payment requests triggering multiple concurrent gateway intents.
+- **Defense Implemented:**
+  - Enforced unique compound index on `{ restaurantId: 1, idempotencyKey: 1 }` and tracking on `transactionReference`.
+  - Replayed requests return the existing pending transaction safely without double billing.
+
+### 8.4 State Machine Decoupling
+- **Threat:** Malicious payment events prematurely modifying kitchen cooking states (`PREPARING`, `READY`).
+- **Defense Implemented:**
+  - `order.paymentStatus` (`UNPAID` -> `PROCESSING` -> `PAID`) operates independently of kitchen statuses (`PLACED` -> `CONFIRMED` -> `PREPARING` -> `READY` -> `SERVED`).
+  - `order.status` only transitions to `PAID` if the food has already reached `SERVED`.
+
+---
+
+## 9. Phase 14 Security Headers & Rate Limiting Hardening
+
+### 9.1 OWASP Security Headers Middleware
+- **Defense Implemented:** Registered `SecurityHeadersMiddleware` across all API routes via NestJS `AppModule`:
+  - `X-Content-Type-Options: nosniff` (MIME sniffing prevention)
+  - `X-Frame-Options: DENY` (Clickjacking defense)
+  - `X-XSS-Protection: 1; mode=block`
+  - `Strict-Transport-Security: max-age=31536000; includeSubDomains`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy: camera=(self), microphone=(), geolocation=()` (allows camera strictly for AR/QR scanning)
+  - `Content-Security-Policy`: Restricts scripts, fonts, frames, and images to trusted sources while permitting AR model assets.
+- **Verification:** Verified by unit tests in `middleware.spec.ts`.
+
+### 9.2 Zero-Dependency In-Memory Rate Limiting
+- **Defense Implemented:** Registered `RateLimitMiddleware` with an in-memory sliding window:
+  - Caps IP requests to 180 requests/minute.
+  - Automatically exempts continuous Server-Sent Events streams (`Accept: text/event-stream`) to prevent premature stream disruption.
+  - Periodically purges stale IP memory records via an unref'd timer to guarantee zero memory leaks.
+- **Verification:** Verified by unit tests in `middleware.spec.ts`.
+
+
 
 
